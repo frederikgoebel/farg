@@ -1,6 +1,6 @@
 const color = 'aqua';
 
-function drawPoint(ctx, y, x, r, color) {
+function drawPoint(ctx, x, y, r, color) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);
   ctx.fillStyle = color;
@@ -16,7 +16,7 @@ function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
     }
 
     const {y, x} = keypoint.position;
-    drawPoint(ctx, y * scale, x * scale, 3, color);
+    drawPoint(ctx, x * scale, y * scale, 3, color);
   }
 }
 
@@ -103,18 +103,18 @@ async function setup() {
       ctx.restore();
 
 
-      const scale = 3.0;
+      const scale = 3.3;
       const h = 200;
-      var circle = new SAT.Circle(new SAT.Vector(h - 30 * scale, videoWidth / 2), 30 * scale);
+      var circle = new SAT.Circle(new SAT.Vector(videoWidth / 2, h - 30 * scale), 30 * scale);
       var body = new SAT.Polygon(new SAT.Vector(videoHeight / 2 - (100 * scale) / 2, h), [
         new SAT.Vector(),
         new SAT.Vector(100 * scale, 0),
-        new SAT.Vector(100 * scale, 100 * scale),
-        new SAT.Vector(80 * scale, 100 * scale),
-        new SAT.Vector(80 * scale, 200 * scale),
-        new SAT.Vector(20 * scale, 200 * scale),
-        new SAT.Vector(20 * scale, 100 * scale),
-        new SAT.Vector(0, 100 * scale)
+        new SAT.Vector(100 * scale, 120 * scale),
+        new SAT.Vector(80 * scale, 120 * scale),
+        new SAT.Vector(80 * scale, 220 * scale),
+        new SAT.Vector(20 * scale, 220 * scale),
+        new SAT.Vector(20 * scale, 120 * scale),
+        new SAT.Vector(0, 120 * scale)
       ]);
 
       let allIn = true;
@@ -122,11 +122,10 @@ async function setup() {
       poses = poses.concat(pose);
       poses.forEach(({score, keypoints}) => {
         drawKeypoints(keypoints, 0.6, ctx);
-        keypoints.forEach(({score, position}) => {
-          if (score > 0.6) {
-            var v = new SAT.Vector(position.x, position.y);
-            allIn &= SAT.pointInCircle(v, circle) || SAT.pointInPolygon(v, body);
-          }
+        keypoints = keypoints.filter(({score}) => score > 0.6);
+        keypoints.forEach(({position}) => {
+          var v = new SAT.Vector(position.x, position.y);
+          allIn &= SAT.pointInPolygon(v, body) || SAT.pointInCircle(v, circle);
         })
       });
 
