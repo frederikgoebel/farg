@@ -35,6 +35,7 @@ async function setupCamera() {
 }
 
 
+
 async function setup() {
   const video = await setupCamera();
   const canvas = document.getElementById('canvas');
@@ -43,6 +44,19 @@ async function setup() {
   const videoContext = videoBuffer.getContext('2d');
   let lineWidth = 1;
   let imageSnapped = false;
+  const scale = 3.3;
+  const h = 200;
+  var circle = new SAT.Circle(new SAT.Vector(videoWidth / 2, h - 30 * scale), 30 * scale);
+  var body = new SAT.Polygon(new SAT.Vector(videoHeight / 2 - (100 * scale) / 2, h), [
+    new SAT.Vector(),
+    new SAT.Vector(100 * scale, 0),
+    new SAT.Vector(100 * scale, 120 * scale),
+    new SAT.Vector(80 * scale, 120 * scale),
+    new SAT.Vector(80 * scale, 220 * scale),
+    new SAT.Vector(20 * scale, 220 * scale),
+    new SAT.Vector(20 * scale, 120 * scale),
+    new SAT.Vector(0, 120 * scale)
+  ]);
   posenet.load().then(async function(net) {
     const imageScaleFactor = 0.50;
     const flipHorizontal = true;
@@ -67,37 +81,18 @@ async function setup() {
       ctx.save();
       ctx.drawImage(videoBuffer, 0, 0, videoWidth, videoHeight);
       ctx.restore();
-
-
-
-
-      const scale = 3.3;
-      const h = 200;
-      var circle = new SAT.Circle(new SAT.Vector(videoWidth / 2, h - 30 * scale), 30 * scale);
-      var body = new SAT.Polygon(new SAT.Vector(videoHeight / 2 - (100 * scale) / 2, h), [
-        new SAT.Vector(),
-        new SAT.Vector(100 * scale, 0),
-        new SAT.Vector(100 * scale, 120 * scale),
-        new SAT.Vector(80 * scale, 120 * scale),
-        new SAT.Vector(80 * scale, 220 * scale),
-        new SAT.Vector(20 * scale, 220 * scale),
-        new SAT.Vector(20 * scale, 120 * scale),
-        new SAT.Vector(0, 120 * scale)
-      ]);
-
       let allIn = true;
-      let poses = [];
-      poses = poses.concat(pose);
-      poses.forEach(({score, keypoints}) => {
-        drawKeypoints(keypoints, 0.6, ctx);
-        keypoints = keypoints.filter(({score}) => score > 0.6);
-        if (keypoints.length == 0)
-          allIn = false;
-        keypoints.forEach(({position}) => {
-          var v = new SAT.Vector(position.x, position.y);
-          allIn &= SAT.pointInPolygon(v, body) || SAT.pointInCircle(v, circle);
-        })
-      });
+
+      drawKeypoints(pose.keypoints, 0.6, ctx);
+
+      pose.keypoints = pose.keypoints.filter(({score}) => score > 0.6);
+      if (pose.keypoints.length == 0)
+        allIn = false;
+      pose.keypoints.forEach(({position}) => {
+        var v = new SAT.Vector(position.x, position.y);
+        allIn &= SAT.pointInPolygon(v, body) || SAT.pointInCircle(v, circle);
+      })
+
 
       let shapeColor;
       if (allIn) {
