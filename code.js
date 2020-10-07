@@ -1,48 +1,3 @@
-const color = 'aqua';
-
-function drawPoint(ctx, x, y, r, color) {
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, 2 * Math.PI);
-  ctx.fillStyle = color;
-  ctx.fill();
-}
-
-function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
-  for (let i = 0; i < keypoints.length; i++) {
-    const keypoint = keypoints[i];
-
-    if (keypoint.score < minConfidence) {
-      continue;
-    }
-
-    const {y, x} = keypoint.position;
-    drawPoint(ctx, x * scale, y * scale, 3, color);
-  }
-}
-
-function setupCanvas() {
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-  const captureButton = document.getElementById('capture');
-
-  const constraints = {
-    video: true,
-  };
-
-  captureButton.addEventListener('click', () => {
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    // Stop all video streams.
-    video.srcObject.getVideoTracks().forEach(track => track.stop());
-  });
-
-  navigator.mediaDevices.getUserMedia(constraints)
-    .then((stream) => {
-      // Attach the video stream to the video element and autoplay.
-      video.srcObject = stream;
-    });
-}
-
 const videoWidth = 900;
 const videoHeight = 900;
 
@@ -52,11 +7,14 @@ async function setupCamera() {
       'Browser API navigator.mediaDevices.getUserMedia not available');
   }
   const canvas = document.getElementById('canvas');
+  const videoBuffer = document.getElementById('videoBuffer');
   const video = document.getElementById('video');
   video.width = videoWidth;
   video.height = videoHeight;
   canvas.width = videoWidth;
   canvas.height = videoHeight;
+  videoBuffer.width = videoWidth;
+  videoBuffer.height = videoHeight;
 
   let mobile = false;
   const stream = await navigator.mediaDevices.getUserMedia({
@@ -77,12 +35,14 @@ async function setupCamera() {
 }
 
 
-
-
 async function setup() {
   const video = await setupCamera();
   const canvas = document.getElementById('canvas');
+  const videoBuffer = document.getElementById('videoBuffer');
   const ctx = canvas.getContext('2d');
+  const videoContext = videoBuffer.getContext('2d');
+  let lineWidth = 1;
+  let imageSnapped = false;
   posenet.load().then(async function(net) {
     const imageScaleFactor = 0.50;
     const flipHorizontal = true;
@@ -96,11 +56,19 @@ async function setup() {
 
       ctx.clearRect(0, 0, videoWidth, videoHeight);
 
+      if (!imageSnapped) {
+        videoContext.save();
+        videoContext.scale(-1, 1);
+        videoContext.translate(-videoWidth, 0);
+        videoContext.drawImage(video, 0, 0, videoWidth, videoHeight);
+        videoContext.restore();
+      }
+
       ctx.save();
-      ctx.scale(-1, 1);
-      ctx.translate(-videoWidth, 0);
-      ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+      ctx.drawImage(videoBuffer, 0, 0, videoWidth, videoHeight);
       ctx.restore();
+
+
 
 
       const scale = 3.3;
@@ -132,26 +100,50 @@ async function setup() {
       });
 
       let shapeColor;
-      if (allIn)
+      if (allIn) {
+        shapeColor = "transparent";
+        lineWidth = Math.ceil(lineWidth * 1.3);
+      } else {
         shapeColor = "rgba(0,255,0,0.5)";
-      else
-        shapeColor = "rgba(255,0,0,0.5)";
-
-      drawPoint(ctx, circle.pos.x, circle.pos.y, circle.r, shapeColor);
+        lineWidth = 5;
+      }
 
 
+      if (lineWidth < 100) {
+        drawPoint(ctx, shapeColor);
 
-      ctx.save(),
-      ctx.fillStyle = shapeColor;
-      ctx.beginPath();
-      ctx.translate(body.pos.x, body.pos.y);
-      ctx.moveTo(0, 0);
-      body.points.forEach((vector) => {
-        ctx.lineTo(vector.x, vector.y);
-      });
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
+        ctx.beginPath();
+        ctx.arc(circle.pos.x, circle.pos.y, circle.r, 0, 2 * Math.PI);
+        ctx.save();
+        ctx.clip();
+        ctx.strokeStyle = "rgba(0,255,0,0.5)"
+        //ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save(),
+        ctx.fillStyle = shapeColor;
+        ctx.strokeStyle = "rgba(0,255,0,0.5)"
+        ctx.beginPath();
+        ctx.translate(body.pos.x, body.pos.y);
+        ctx.moveTo(0, 0);
+        body.points.forEach((vector) => {
+          ctx.lineTo(vector.x, vector.y);
+        });
+        ctx.closePath();
+        ctx.save();
+        ctx.clip();
+        ctx.lineWidth = lineWidth;
+        //ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+        ctx.restore();
+      } else if (!imageSnapped) {
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        imageSnapped = true;
+      } else {
+      }
 
       requestAnimationFrame(oneFrame)
     }
@@ -161,5 +153,19 @@ async function setup() {
   });
 
 }
+
+
+// function main(){
+//   switch(state){
+//     case Idle:
+//       recognize position
+//       case position recognized:
+//         fill shape;
+//       case shape full:
+//       snap image;
+//       case image there:
+//         other people deal with dis;
+//   }
+// }
 
 setup();
