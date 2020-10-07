@@ -123,6 +123,8 @@ async function setup() {
       poses.forEach(({score, keypoints}) => {
         drawKeypoints(keypoints, 0.6, ctx);
         keypoints = keypoints.filter(({score}) => score > 0.6);
+        if (keypoints.length == 0)
+          allIn = false;
         keypoints.forEach(({position}) => {
           var v = new SAT.Vector(position.x, position.y);
           allIn &= SAT.pointInPolygon(v, body) || SAT.pointInCircle(v, circle);
