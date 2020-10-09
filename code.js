@@ -1,6 +1,9 @@
 const videoWidth = 900;
 const videoHeight = 900;
 
+const frontColor = "#F7566A";
+const backColor = "#023F92";
+
 async function setupCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw new Error(
@@ -56,6 +59,23 @@ async function setup() {
     new SAT.Vector(20 * scale, 120 * scale),
     new SAT.Vector(0, 120 * scale)
   ]);
+
+
+
+
+  let raw = "161.833333 139.808458 221.333333 129 212.833333 211.144279 214.25 258.701493 239.75 266.267413 263.833333 264.105721 278 266.267413 295 288.965174 312 372.190299 338.916667 535.39801 341.75 655.371891 316.25 647.80597 299.25 518.104478 293.583333 478.113184 285.083333 453.253731 273.75 440.283582 272.333333 548.368159 272.333333 594.844527 261 694.282338 252.5 796.962687 248.25 899.643035 258.166667 998 227 998 198.666667 998 177.416667 896.400498 173.166667 836.95398 159 722.384328 142 630.512438 142 591.60199 136.333333 428.394279 116.5 520.266169 99.5 639.159204 93.8333333 681.312189 69.75 661.856965 69.75 569.985075 76.8333333 454.334577 99.5 304.097015 137.75 280.318408 153.333333 272.752488 167.5 251.135572 159 217.629353"
+
+  let numbers = raw.split(" ");
+
+  let drawList = []
+  for (let i = 0; i < numbers.length; i += 2) {
+    drawList.push({
+      x: numbers[i] - 67.000000,
+      y: numbers[i + 1] - 125.000000,
+    })
+  }
+
+
   posenet.load().then(async function(net) {
     const imageScaleFactor = 0.50;
     const flipHorizontal = true;
@@ -67,11 +87,12 @@ async function setup() {
         decodingMethod: 'single-person'
       });
 
+      let allIn = true;
       pose.keypoints = pose.keypoints.filter(({score}) => score > 0.6);
       if (pose.keypoints.length == 0)
         allIn = false;
 
-      let allIn = true;
+
       pose.keypoints.forEach(({position}) => {
         var v = new SAT.Vector(position.x, position.y);
         allIn &= SAT.pointInPolygon(v, body) || SAT.pointInCircle(v, circle);
@@ -90,6 +111,25 @@ async function setup() {
 
 
     function drawBody(color) {
+      ctx.save();
+      ctx.translate(300, 20);
+      ctx.scale(1.25, 1.0)
+      ctx.beginPath();
+      ctx.moveTo(drawList[0].x, drawList[0].y);
+      drawList.forEach((point) => {
+        ctx.lineTo(point.x, point.y);
+      });
+      ctx.closePath();
+      ctx.save();
+      ctx.clip();
+      ctx.strokeStyle = frontColor;
+      ctx.lineWidth = bodyObj.lineWidth;
+      ctx.stroke();
+      ctx.restore();
+      ctx.restore();
+
+      return
+
       ctx.fillStyle = ctx.strokeStyle = color;
 
       // head
@@ -117,10 +157,25 @@ async function setup() {
       let allIn = await humanInShape()
       ctx.clearRect(0, 0, videoWidth, videoHeight);
 
+      ctx.rect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = backColor;
+      ctx.fill();
+
       saveVideoToBuffer(video, videoContext)
 
       // bg
       ctx.save();
+      ctx.translate(300, 20);
+      ctx.scale(1.25, 1.0)
+      ctx.beginPath();
+      ctx.moveTo(drawList[0].x, drawList[0].y);
+      drawList.forEach((point) => {
+        ctx.lineTo(point.x, point.y);
+      });
+      ctx.clip()
+      ctx.scale(0.8, 1.0)
+      ctx.translate(-300, -20);
+
       ctx.drawImage(videoBuffer, 0, 0, videoWidth, videoHeight);
       ctx.restore();
 
@@ -140,7 +195,7 @@ async function setup() {
     fadeTl.pause();
     fadeTl.to(bodyObj, {
       duration: 3,
-      lineWidth: 350,
+      lineWidth: 200,
       ease: "sine.in",
     });
 
@@ -148,9 +203,24 @@ async function setup() {
       let allIn = await humanInShape()
       ctx.clearRect(0, 0, videoWidth, videoHeight);
 
+      ctx.rect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = backColor;
+      ctx.fill();
+
       saveVideoToBuffer(video, videoContext)
 
+      // bg
       ctx.save();
+      ctx.translate(300, 20);
+      ctx.scale(1.25, 1.0)
+      ctx.beginPath();
+      ctx.moveTo(drawList[0].x, drawList[0].y);
+      drawList.forEach((point) => {
+        ctx.lineTo(point.x, point.y);
+      });
+      ctx.clip()
+      ctx.scale(0.8, 1.0)
+      ctx.translate(-300, -20);
       ctx.drawImage(videoBuffer, 0, 0, videoWidth, videoHeight);
       ctx.restore();
 
