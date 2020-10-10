@@ -15,11 +15,13 @@ let size = {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  let offset = 0;
-  for (let s = 0; s < swatches.length; s++) {
+ let offset = 0;
+ let totalWidth = 0;
+
+  for (let s = swatches.length-1; s > 0; s--) {
     for (let c = 0; c < swatches[s].swatches.length; c++) {
       ctx.beginPath();
-      ctx.rect(swatches[s].x, size.y * c, size.x, size.y);
+      ctx.rect(totalWidth, size.y * c, size.x-offset, size.y);
       ctx.fillStyle = swatches[s].swatches[c];
       ctx.fill();
     // var grd = ctx.createLinearGradient(swatches[s].x, size.y * c, swatches[s].x + size.x, size.y * c + size.y);
@@ -28,6 +30,10 @@ function draw() {
     // ctx.fillStyle = grd;
     // ctx.fill();
     }
+    //Calculate new total width
+    totalWidth = totalWidth + size.x-offset;
+    //Make each swatch-column smaller the further right it is
+    offset = offset + 3;
   }
 
   requestAnimationFrame(draw)
