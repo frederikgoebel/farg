@@ -59,6 +59,9 @@ function addSwatch(swatch) {
   column.classList.add('color-column');
 
 
+
+
+
   tmpSwatches.forEach(color => {
     var field = document.createElement("div");
     field.classList.add('color-field');
@@ -67,6 +70,14 @@ function addSwatch(swatch) {
   })
 
   document.getElementById("color-stream").prepend(column);
+  requestAnimationFrame(function() {
+    console.log("now")
+    column.classList.add('full-width');
+  })
+
+  column.addEventListener('webkitTransitionEnd', function(evt) {
+    this.classList.remove('new');
+  });
   return;
 
 
@@ -87,6 +98,10 @@ function addSwatch(swatch) {
     })
   })
   i++;
+}
+
+for (let i = 0; i < 500; i++) {
+  addSwatch()
 }
 
 document.body.addEventListener('click', addSwatch, true);

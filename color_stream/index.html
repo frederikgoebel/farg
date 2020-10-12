@@ -30,14 +30,23 @@
     }
 
     .color-column {
-      width: 100px;
       height: 100%;
+      flex-grow: 0.0000001;
+      transition: flex-grow 300ms ease-in, width 300ms ease-in;
+      width: 0;
     }
 
     .color-field {
-      width: 100px;
       height: 16.666%;
       background: red;
+    }
+
+    .full-width {
+      flex-grow: 1;
+    }
+
+    .color-column:hover {
+      width: 200px;
     }
   </style>
 </head>
