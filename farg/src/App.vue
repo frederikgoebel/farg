@@ -1,23 +1,21 @@
 <template>
-<div id="app" class="flex-container" @click="addSwatch()">
-  <canvas id="canvas"></canvas>
-  <transition-group name="stream" tag="div" id="color-stream" class="flex-container">
-    <div v-for="(swatch, index) in swatches" :key="`swatch-${index}`" class="color-column">
-      <div v-for=" (color, index) in swatch" :key="`color-${index}`" class="color-field" :style="{background:  color  }">
-      </div>
-    </div>
-  </transition-group>
-</div>
-
+<div id="app" class="row" @click="addSwatch()">
+  <Mirror />
+  <Stream :swatches="swatches" />
 </div>
 </template>
 
 <script>
+import Stream from './components/Stream.vue'
+import Mirror from './components/Mirror.vue'
 let swatchAmount = 6;
 
 export default {
   name: 'app',
-  components: {},
+  components: {
+    Stream,
+    Mirror,
+  },
   data: () => ({
     swatches: [],
   }),
@@ -42,44 +40,5 @@ body {
   width: 100%;
   height: 100%;
   margin: 0;
-}
-
-.flex-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-}
-
-#canvas {
-  height: 100%;
-  width: 30%;
-}
-
-#color-stream {
-  width: 70%;
-  background: black;
-  height: 100%;
-  overflow: hidden;
-  flex-direction: row-reverse;
-}
-
-.color-column {
-  height: 100%;
-  flex-grow: 1;
-  transition: flex-grow 300ms ease-in, width 100ms ease-out;
-  width: 0;
-}
-
-.color-field {
-  height: 16.666%;
-  background: red;
-}
-
-.stream-enter {
-  flex-grow: 0.0000001;
-}
-
-.color-column:hover {
-  width: 200px;
 }
 </style>
