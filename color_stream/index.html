@@ -11,17 +11,44 @@
       margin: 0;
     }
 
+    .flex-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+    }
+
     #canvas {
       height: 100%;
-      width: 100%;
+      width: 30%;
+    }
+
+    #color-stream {
+      width: 70%;
+      background: black;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .color-column {
+      width: 100px;
+      height: 100%;
+    }
+
+    .color-field {
+      width: 100px;
+      height: 16.666%;
+      background: red;
     }
   </style>
 </head>
 
 <body>
-  <canvas id="canvas"></canvas>
+  <div class="flex-container">
+    <canvas id="canvas"></canvas>
+    <div id="color-stream" class="flex-container">
+    </div>
+  </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.5.1/gsap.min.js"></script>
-
   <script src="./code.js"></script>
 </body>
 

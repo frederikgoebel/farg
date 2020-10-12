@@ -15,13 +15,13 @@ let size = {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
- let offset = 0;
- let totalWidth = 0;
+  let offset = 0;
+  let totalWidth = 0;
 
-  for (let s = swatches.length-1; s > 0; s--) {
+  for (let s = swatches.length - 1; s > 0; s--) {
     for (let c = 0; c < swatches[s].swatches.length; c++) {
       ctx.beginPath();
-      ctx.rect(totalWidth, size.y * c, size.x-offset, size.y);
+      ctx.rect(totalWidth, size.y * c, size.x - offset, size.y);
       ctx.fillStyle = swatches[s].swatches[c];
       ctx.fill();
     // var grd = ctx.createLinearGradient(swatches[s].x, size.y * c, swatches[s].x + size.x, size.y * c + size.y);
@@ -31,7 +31,7 @@ function draw() {
     // ctx.fill();
     }
     //Calculate new total width
-    totalWidth = totalWidth + size.x-offset;
+    totalWidth = totalWidth + size.x - offset;
     //Make each swatch-column smaller the further right it is
     offset = offset + 3;
   }
@@ -46,15 +46,31 @@ function rndColor() {
 let i = 0;
 let canAdd = true;
 function addSwatch(swatch) {
-  if (!canAdd)
-    return;
-  canAdd = false;
+  // if (!canAdd)
+  //   return;
+  // canAdd = false;
 
 
   let tmpSwatches = []
   for (let i = 0; i < swatchAmount; i++) {
     tmpSwatches.push(rndColor());
   }
+  var column = document.createElement("div");
+  column.classList.add('color-column');
+
+
+  tmpSwatches.forEach(color => {
+    var field = document.createElement("div");
+    field.classList.add('color-field');
+    field.style.background = color;
+    column.appendChild(field);
+  })
+
+  document.getElementById("color-stream").prepend(column);
+  return;
+
+
+
   swatches.push({
     swatches: tmpSwatches,
     x: -size.x,
