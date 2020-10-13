@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import { humanInShape, saveVideoToBuffer, drawBody } from './mirror';
+import { saveVideoToBuffer, drawBody, CollisionBody, getPose } from './mirror';
 
 const frontColor = "#F7566A";
 const backColor = "#023F92";
@@ -19,9 +19,15 @@ function drawFillCentered(src, dst) {
 }
 
 class Idle {
-  constructor() {}
+  constructor() {
+    this.collisionBody = new CollisionBody({
+      x: 0,
+      y: 0
+    }, 3);
+  }
   async tick(drawCtx, video, videoBuffer, posenet) {
-    let allIn = await humanInShape(posenet, video);
+    let pose = await getPose(posenet, video);
+    let allIn = this.collisionBody.colliding(pose);
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height)
 
     drawCtx.rect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height)
@@ -47,6 +53,7 @@ class Idle {
     drawCtx.restore();
 
     drawBody(drawCtx, "rgba(255,0,0,0.5)");
+    this.collisionBody.debugDraw(drawCtx);
 
     if (allIn)
       return "found"
@@ -67,10 +74,15 @@ class Found {
       lineWidth: 200,
       ease: "sine.in",
     });
+    this.collisionBody = new CollisionBody({
+      x: 0,
+      y: 0
+    }, 3);
   }
 
   async tick(drawCtx, video, videoBuffer, posenet) {
-    let allIn = await humanInShape(posenet, video)
+    let pose = await getPose(posenet, video);
+    let allIn = this.collisionBody.colliding(pose);
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height)
 
     drawCtx.rect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height)
@@ -95,6 +107,7 @@ class Found {
     drawCtx.restore();
 
     drawBody(drawCtx, "rgba(0,255,0,0.5)");
+    this.collisionBody.debugDraw(drawCtx);
 
     if (allIn)
       this.fadeTl.play();
