@@ -40,7 +40,12 @@ export default {
       mirror.setupVideoBuffer(this.$refs.videoBuffer, this.$refs.video)
       this.renderLayer = this.$refs.canvas.getContext("2d");
       tf.enableProdMode()
-      posenet.load().then((net) => {
+      posenet.load({
+        architecture: 'MobileNetV1',
+        outputStride: 16,
+        inputResolution: { width: 257, height: 257 },
+        multiplier: 0.75,
+      }).then((net) => {
         console.log("backend:", tf.getBackend());
         this.net = net;
         window.requestAnimationFrame(this.draw);
