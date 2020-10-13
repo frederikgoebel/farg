@@ -1,27 +1,34 @@
 <template>
-<canvas id="canvas"></canvas>
+<div class="mirror">
+  <canvas class="canvas" ref="canvas"></canvas>
+  <video ref="video" playsinline autoplay style="display: none;"> </video>
+  <canvas ref="videoBuffer" style="display: none;"></canvas>
+</div>
 </template>
 
 <script>
+import * as tf from '@tensorflow/tfjs';
+import * as posenet from '@tensorflow-models/posenet';
+import * as mirror from '../utils/mirror';
+import StateMachine from '../utils/statemachine';
+
 export default {
   data: () => ({
     renderLayer: null,
-    renderCanvas: null,
+    stateMachine: new StateMachine(),
+    net: null,
   }),
   methods: {
+
     draw() {
-      this.resize(this.renderCanvas);
-      this.renderLayer.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-      this.renderLayer.rect(0, 0, 100, 100);
-      this.renderLayer.fill();
-      window.requestAnimationFrame(this.draw);
+      this.resize(this.$refs.canvas);
+      this.stateMachine.tick(this.$refs.canvas.getContext("2d"), this.$refs.video, this.$refs.videoBuffer.getContext("2d"), this.net).then(() => {
+        window.requestAnimationFrame(this.draw);
+      })
     },
     resize(canvas) {
-      // look up the size the canvas is being displayed
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
-
-      // If it's resolution does not match change it
       if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;
@@ -29,16 +36,31 @@ export default {
     },
   },
   mounted() {
-    this.renderCanvas = document.getElementById("canvas");
-    this.renderLayer = this.renderCanvas.getContext("2d");
-    window.requestAnimationFrame(this.draw);
+    mirror.setupCamera(this.$refs.video).then(() => {
+      mirror.setupVideoBuffer(this.$refs.videoBuffer, this.$refs.video)
+      this.renderLayer = this.$refs.canvas.getContext("2d");
+      tf.enableProdMode()
+      posenet.load().then((net) => {
+        console.log("backend:", tf.getBackend());
+        this.net = net;
+        window.requestAnimationFrame(this.draw);
+      }).catch((err) => {
+        throw (err)
+      })
+    })
   },
 }
 </script>
 
 <style>
-#canvas {
+.mirror {
+  display: flex;
+  align-items: stretch;
   height: 100%;
   width: 30%;
+}
+
+.canvas {
+  flex-grow: 1;
 }
 </style>
