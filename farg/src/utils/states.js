@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import { saveVideoToBuffer, drawBody, CollisionBody, getPose } from './mirror';
+import { saveVideoToBuffer, drawBody, CollisionBody, getPose, drawKeypoints } from './mirror';
 
 const frontColor = "#F7566A";
 const backColor = "#023F92";
@@ -35,6 +35,7 @@ class Idle {
     drawCtx.fill();
 
     saveVideoToBuffer(video, videoBuffer);
+    drawKeypoints(pose.keypoints, 0.6, videoBuffer);
 
     // bg
     drawCtx.save();
@@ -54,6 +55,7 @@ class Idle {
 
     drawBody(drawCtx, "rgba(255,0,0,0.5)");
     this.collisionBody.debugDraw(drawCtx);
+
 
     if (allIn)
       return "found"
@@ -81,7 +83,7 @@ class Found {
   }
 
   async tick(drawCtx, video, videoBuffer, posenet) {
-    let pose = await getPose(posenet, video);
+    let pose = await getPose(posenet, videoBuffer.canvas);
     let allIn = this.collisionBody.colliding(pose);
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height)
 
@@ -90,7 +92,7 @@ class Found {
     drawCtx.fill();
 
     saveVideoToBuffer(video, videoBuffer);
-
+    drawKeypoints(pose.keypoints, 0.6, videoBuffer);
     // bg
     drawCtx.save();
     // drawCtx.translate(300, 20);
@@ -108,6 +110,8 @@ class Found {
 
     drawBody(drawCtx, "rgba(0,255,0,0.5)");
     this.collisionBody.debugDraw(drawCtx);
+
+
 
     if (allIn)
       this.fadeTl.play();

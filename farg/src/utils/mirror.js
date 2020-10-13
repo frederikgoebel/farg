@@ -3,6 +3,28 @@ import SAT from 'sat';
 const frontColor = "#F7566A";
 
 
+
+function drawPoint(ctx, x, y, r, color) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, 2 * Math.PI);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
+  for (let i = 0; i < keypoints.length; i++) {
+    const keypoint = keypoints[i];
+
+    if (keypoint.score < minConfidence) {
+      continue;
+    }
+
+    const {y, x} = keypoint.position;
+    drawPoint(ctx, x * scale, y * scale, 3, "rgba(0,0,255,1)");
+  }
+}
+
+
 class CollisionBody {
   constructor(pos, scale) {
     const h = 200;
@@ -51,7 +73,8 @@ class CollisionBody {
 function setupVideoBuffer(videoBuffer, video) {
   videoBuffer.width = video.videoWidth;
   videoBuffer.height = video.videoHeight;
-
+  video.width = video.videoWidth;
+  video.height = video.videoHeight;
 }
 
 async function setupCamera(video) {
@@ -126,4 +149,4 @@ function drawBody(ctx, color) {
 }
 
 
-export { setupCamera, setupVideoBuffer, drawBody, saveVideoToBuffer, getPose, CollisionBody }
+export { setupCamera, setupVideoBuffer, drawBody, saveVideoToBuffer, getPose, CollisionBody, drawKeypoints }
