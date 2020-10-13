@@ -24,14 +24,10 @@ class CollisionBody {
 }
 
 
-const videoSize = {
-  w: 256,
-  h: 256
-};
-
 function setupVideoBuffer(videoBuffer, video) {
-  videoBuffer.width = video.width;
-  videoBuffer.height = video.height;
+  videoBuffer.width = video.videoWidth;
+  videoBuffer.height = video.videoHeight;
+
 }
 
 async function setupCamera(video) {
@@ -39,17 +35,12 @@ async function setupCamera(video) {
     throw new Error(
       'Browser API navigator.mediaDevices.getUserMedia not available');
   }
-  video.width = videoSize.w;
-  video.height = videoSize.h;
 
   let mobile = false;
+  console.log(navigator.mediaDevices.getSupportedConstraints());
   const stream = await navigator.mediaDevices.getUserMedia({
     'audio': false,
-    'video': {
-      facingMode: 'user',
-      width: mobile ? undefined : videoSize.w,
-      height: mobile ? undefined : videoSize.h,
-    },
+    'video': true,
   });
   video.srcObject = stream;
 
@@ -62,8 +53,8 @@ async function setupCamera(video) {
 function saveVideoToBuffer(video, buffer) {
   buffer.save();
   buffer.scale(-1, 1);
-  buffer.translate(-videoSize.w, 0);
-  buffer.drawImage(video, 0, 0, videoSize.w, videoSize.h);
+  buffer.translate(-video.videoWidth, 0);
+  buffer.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
   buffer.restore();
 }
 

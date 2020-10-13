@@ -4,6 +4,20 @@ import { humanInShape, saveVideoToBuffer, drawBody } from './mirror';
 const frontColor = "#F7566A";
 const backColor = "#023F92";
 
+function drawFillCentered(src, dst) {
+  var aspect = src.canvas.width / src.canvas.height;
+  var newHeight;
+  var newWidth;
+  if (dst.canvas.clientHeight > dst.canvas.clientWidth) {
+    newHeight = dst.canvas.clientHeight;
+    newWidth = newHeight * aspect;
+  } else {
+    newWidth = dst.canvas.clientWidth;
+    newHeight = newWidth * aspect;
+  }
+  dst.drawImage(src.canvas, -(newWidth - dst.canvas.clientWidth) / 2, -(newHeight - dst.canvas.clientHeight) / 2, newWidth, newHeight);
+}
+
 class Idle {
   constructor() {}
   async tick(drawCtx, video, videoBuffer, posenet) {
@@ -28,8 +42,8 @@ class Idle {
     // drawCtx.clip()
     // drawCtx.scale(0.8, 1.0)
     // drawCtx.translate(-300, -20);
+    drawFillCentered(videoBuffer, drawCtx);
 
-    drawCtx.drawImage(videoBuffer.canvas, 0, 0, videoBuffer.canvas.width, videoBuffer.canvas.height);
     drawCtx.restore();
 
     drawBody(drawCtx, "rgba(255,0,0,0.5)");
@@ -77,7 +91,7 @@ class Found {
     // drawCtx.clip()
     // drawCtx.scale(0.8, 1.0)
     // drawCtx.translate(-300, -20);
-    drawCtx.drawImage(videoBuffer.canvas, 0, 0, videoBuffer.canvas.width, videoBuffer.canvas.height);
+    drawFillCentered(videoBuffer, drawCtx);
     drawCtx.restore();
 
     drawBody(drawCtx, "rgba(0,255,0,0.5)");
@@ -111,7 +125,9 @@ class Flash {
 
   async tick(drawCtx, video, videoBuffer, posenet) {
     this.flashTl.play();
-    saveVideoToBuffer(video, videoBuffer);
+    if (this.flashTl.totalProgress() == 0)
+      saveVideoToBuffer(video, videoBuffer);
+
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
     drawCtx.save();
