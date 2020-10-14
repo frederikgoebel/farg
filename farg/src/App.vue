@@ -1,6 +1,6 @@
 <template>
 <div id="app" class="row" @click="addSwatch()">
-  <Mirror />
+  <Mirror @swatchAdded="addSwatch" />
   <Stream :swatches="swatches" />
 </div>
 </template>
@@ -23,13 +23,16 @@ export default {
     rndColor() {
       return '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6)
     },
-    addSwatch() {
-      let tmpSwatches = []
-      for (let i = 0; i < swatchAmount; i++) {
-        tmpSwatches.push(this.rndColor());
+    addSwatch(swatch) {
+      console.log(swatch)
+      if (swatch == undefined) {
+        var swatch = [];
+        for (let i = 0; i < swatchAmount; i++) {
+          swatch.push(this.rndColor());
+        }
       }
-      this.swatches.push(tmpSwatches);
-    },
+      this.swatches.push(swatch);
+    }
   }
 }
 </script>

@@ -15,11 +15,13 @@ import StateMachine from '../utils/statemachine';
 export default {
   data: () => ({
     renderLayer: null,
-    stateMachine: new StateMachine(),
+    stateMachine: null,
     net: null,
   }),
   methods: {
-
+    swatchAdded(swatch) {
+      this.$emit("swatchAdded", swatch);
+    },
     draw() {
       this.resize(this.$refs.canvas);
 
@@ -39,6 +41,7 @@ export default {
     },
   },
   mounted() {
+    this.stateMachine = new StateMachine(this.swatchAdded);
     mirror.setupCamera(this.$refs.video).then(() => {
       mirror.setupVideoBuffer(this.$refs.videoBuffer, this.$refs.video)
       this.renderLayer = this.$refs.canvas.getContext("2d");

@@ -7,16 +7,16 @@ const backColor = "#023F92";
 
 
 class Idle {
-  constructor() {
-    this.collisionBody = new CollisionBody({
-      x: 0,
-      y: 0
-    }, 3);
-  }
+  constructor() {}
   async tick(drawCtx, video, videoBuffer, posenet) {
+    let collisionBody = new CollisionBody({
+      x: 20,
+      y: 0
+    }, drawCtx.canvas.height / 280);
+
     saveVideoToBuffer(video, videoBuffer);
     let pose = await getPose(posenet, videoBuffer.canvas);
-    let allIn = this.collisionBody.colliding(pose);
+    let allIn = collisionBody.colliding(pose);
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height)
 
@@ -26,7 +26,7 @@ class Idle {
 
     drawCtx.drawImage(videoBuffer.canvas, 0, 0);
 
-    this.collisionBody.debugDraw(drawCtx);
+    collisionBody.debugDraw(drawCtx);
     drawKeypoints(pose.keypoints, 0.6, drawCtx);
 
     if (allIn)
@@ -48,16 +48,19 @@ class Found {
       lineWidth: 200,
       ease: "sine.in",
     });
-    this.collisionBody = new CollisionBody({
-      x: 0,
-      y: 0
-    }, 3);
+
   }
 
   async tick(drawCtx, video, videoBuffer, posenet) {
+
+    let collisionBody = new CollisionBody({
+      x: 20,
+      y: 0
+    }, drawCtx.canvas.height / 280);
+
     saveVideoToBuffer(video, videoBuffer);
     let pose = await getPose(posenet, videoBuffer.canvas);
-    let allIn = this.collisionBody.colliding(pose);
+    let allIn = collisionBody.colliding(pose);
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height)
 
@@ -67,7 +70,7 @@ class Found {
 
     drawCtx.drawImage(videoBuffer.canvas, 0, 0);
 
-    this.collisionBody.debugDraw(drawCtx);
+    collisionBody.debugDraw(drawCtx);
     drawKeypoints(pose.keypoints, 0.6, drawCtx);
 
 
@@ -77,9 +80,11 @@ class Found {
     else
       this.fadeTl.reverse()
 
-    if (this.fadeTl.totalProgress() == 1)
+    if (this.fadeTl.totalProgress() == 1) {
+      this.fadeTl.totalProgress(0);
+      this.fadeTl.pause()
       return "flash"
-    else if (this.fadeTl.totalProgress() == 0)
+    } else if (this.fadeTl.totalProgress() == 0)
       return "idle"
     return "found"
   }
@@ -112,20 +117,33 @@ class Flash {
     drawCtx.fillStyle = "rgba(255,255,255," + this.flashObj.lumen + ")";
     drawCtx.fill();
 
-    if (this.flashTl.totalProgress() == 1)
-      return "colorSteal"
+    if (this.flashTl.totalProgress() == 1) {
+      this.flashTl.totalProgress(0);
+      this.flashTl.pause()
+      return "colorSteal";
+    }
     return "flash"
   }
 }
 
 class ColorSteal {
-  constructor() {}
+  constructor(colorCallback) {
+    this.colorCallback = colorCallback;
+  }
+  rndColor() {
+    return '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6)
+  }
   async tick(drawCtx, video, videoBuffer, posenet) {
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
     drawCtx.save();
     drawCtx.drawImage(videoBuffer.canvas, 0, 0, videoBuffer.canvas.width, videoBuffer.canvas.height);
     drawCtx.restore();
-    return "colorSteal"
+    let swatch = []
+    for (let i = 0; i < 6; i++) {
+      swatch.push(this.rndColor());
+    }
+    this.colorCallback(swatch);
+    return "idle" // TOOD return colorSteal until everything is done
   }
 }
 
