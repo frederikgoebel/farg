@@ -1,26 +1,35 @@
 import gsap from "gsap";
-import { saveVideoToBuffer, drawBody, CollisionBody, getPose, drawKeypoints } from './mirror';
+import {
+  saveVideoToBuffer,
+  drawBody,
+  CollisionBody,
+  getPose,
+  drawKeypoints,
+} from "./mirror";
+
+import pixelator, { generateSwatches } from "./pixelator";
 
 const frontColor = "#F7566A";
 const backColor = "#023F92";
 
-
-
 class Idle {
   constructor() {}
   async tick(drawCtx, video, videoBuffer, posenet) {
-    let collisionBody = new CollisionBody({
-      x: 20,
-      y: 0
-    }, drawCtx.canvas.height / 280);
+    let collisionBody = new CollisionBody(
+      {
+        x: 20,
+        y: 0,
+      },
+      drawCtx.canvas.height / 280
+    );
 
     saveVideoToBuffer(video, videoBuffer);
     let pose = await getPose(posenet, videoBuffer.canvas);
     let allIn = collisionBody.colliding(pose);
 
-    drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height)
+    drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
-    drawCtx.rect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height)
+    drawCtx.rect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
     drawCtx.fillStyle = backColor;
     drawCtx.fill();
 
@@ -29,12 +38,10 @@ class Idle {
     collisionBody.debugDraw(drawCtx);
     drawKeypoints(pose.keypoints, 0.6, drawCtx);
 
-    if (allIn)
-      return "found"
-    return "idle"
+    if (allIn) return "found";
+    return "idle";
   }
 }
-
 
 class Found {
   constructor() {
@@ -48,23 +55,24 @@ class Found {
       lineWidth: 200,
       ease: "sine.in",
     });
-
   }
 
   async tick(drawCtx, video, videoBuffer, posenet) {
-
-    let collisionBody = new CollisionBody({
-      x: 20,
-      y: 0
-    }, drawCtx.canvas.height / 280);
+    let collisionBody = new CollisionBody(
+      {
+        x: 20,
+        y: 0,
+      },
+      drawCtx.canvas.height / 280
+    );
 
     saveVideoToBuffer(video, videoBuffer);
     let pose = await getPose(posenet, videoBuffer.canvas);
     let allIn = collisionBody.colliding(pose);
 
-    drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height)
+    drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
-    drawCtx.rect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height)
+    drawCtx.rect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
     drawCtx.fillStyle = backColor;
     drawCtx.fill();
 
@@ -73,20 +81,15 @@ class Found {
     collisionBody.debugDraw(drawCtx);
     drawKeypoints(pose.keypoints, 0.6, drawCtx);
 
-
-
-    if (allIn)
-      this.fadeTl.play();
-    else
-      this.fadeTl.reverse()
+    if (allIn) this.fadeTl.play();
+    else this.fadeTl.reverse();
 
     if (this.fadeTl.totalProgress() == 1) {
       this.fadeTl.totalProgress(0);
-      this.fadeTl.pause()
-      return "flash"
-    } else if (this.fadeTl.totalProgress() == 0)
-      return "idle"
-    return "found"
+      this.fadeTl.pause();
+      return "flash";
+    } else if (this.fadeTl.totalProgress() == 0) return "idle";
+    return "found";
   }
 }
 
@@ -94,14 +97,14 @@ class Flash {
   constructor() {
     this.flashObj = {
       lumen: 1.0,
-    }
+    };
     this.flashTl = gsap.timeline({});
-    this.flashTl.pause()
+    this.flashTl.pause();
     this.flashTl.to(this.flashObj, {
       lumen: 0.0,
       duration: 0.7,
       ease: "power4.inOut",
-    })
+    });
   }
 
   async tick(drawCtx, video, videoBuffer, posenet) {
@@ -119,10 +122,10 @@ class Flash {
 
     if (this.flashTl.totalProgress() == 1) {
       this.flashTl.totalProgress(0);
-      this.flashTl.pause()
+      this.flashTl.pause();
       return "colorSteal";
     }
-    return "flash"
+    return "flash";
   }
 }
 
@@ -131,21 +134,30 @@ class ColorSteal {
     this.colorCallback = colorCallback;
   }
   rndColor() {
-    return '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6)
+    return (
+      "#" + (0x1000000 + Math.random() * 0xffffff).toString(16).substr(1, 6)
+    );
   }
   async tick(drawCtx, video, videoBuffer, posenet) {
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
     drawCtx.save();
-    drawCtx.drawImage(videoBuffer.canvas, 0, 0, videoBuffer.canvas.width, videoBuffer.canvas.height);
+    drawCtx.drawImage(
+      videoBuffer.canvas,
+      0,
+      0,
+      videoBuffer.canvas.width,
+      videoBuffer.canvas.height
+    );
     drawCtx.restore();
-    let swatch = []
-    for (let i = 0; i < 6; i++) {
-      swatch.push(this.rndColor());
-    }
+    const pose = await getPose(posenet, videoBuffer.canvas);
+    // Generate swatch by reading the different keypoints of the pose
+    generateSwatches(videoBuffer.canvas, pose);
+    // Generate swatch by reading a column of rows of the buffer
+    const swatch = pixelator(videoBuffer.canvas);
+
     this.colorCallback(swatch);
-    return "idle" // TOOD return colorSteal until everything is done
+    return "idle"; // TOOD return colorSteal until everything is done
   }
 }
 
-
-export { Idle, Found, Flash, ColorSteal }
+export { Idle, Found, Flash, ColorSteal };
