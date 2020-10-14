@@ -6,6 +6,8 @@
 </template>
 
 <script>
+import axios from 'axios'
+
 import Stream from './components/Stream.vue'
 import Mirror from './components/Mirror.vue'
 let swatchAmount = 6;
@@ -32,7 +34,25 @@ export default {
         }
       }
       this.swatches.push(swatch);
+
+      axios.post('http://localhost:8082/debug/swatches', {
+        colors: swatch,
+      }).catch(function(error) {
+        // handle error
+        console.log(error);
+      })
     }
+  },
+  mounted() {
+    axios.get('http://localhost:8082/debug/swatches')
+      .then(response => {
+        this.swatches = response.data.colors;
+        console.log("response", response);
+      })
+      .catch(function(error) {
+        // handle error
+        console.log(error);
+      })
   }
 }
 </script>

@@ -53,19 +53,35 @@ func main() {
 	}
 
 	router := mux.NewRouter().StrictSlash(false)
-	router.HandleFunc("/{stream}/swatches", postSwatch(db)).Methods("POST")
-	router.HandleFunc("/{stream}/swatches", getStream(db)).Methods("GET")
+	router.Handle("/{stream}/swatches", CORS(Preflight())).Methods("OPTIONS")
+	router.Handle("/{stream}/swatches", CORS(postSwatch(db))).Methods("POST")
+	router.Handle("/{stream}/swatches", CORS(getStream(db))).Methods("GET")
 	log.Println("Listen and serve on :8082")
 	http.ListenAndServe(":8082", router)
 }
 
-// Swatch represents the json body of a new color swatch
-type Swatch struct {
-	Colors []string
+func Preflight() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 }
 
-func postSwatch(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func CORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		next.ServeHTTP(w, r)
+	})
+}
+
+// Swatch represents the json body of a new color swatch
+type Swatch struct {
+	Colors []string `json:"colors"`
+}
+
+func postSwatch(db *sql.DB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		streamID := mux.Vars(r)["stream"]
 		decoder := json.NewDecoder(r.Body)
 		var swatch Swatch
@@ -104,15 +120,15 @@ func postSwatch(db *sql.DB) http.HandlerFunc {
 		}
 		w.WriteHeader(http.StatusCreated)
 		tx.Commit()
-	}
+	})
 }
 
 type Stream struct {
-	Colors [][]string
+	Colors [][]string `json:"colors"`
 }
 
-func getStream(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func getStream(db *sql.DB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		streamID := mux.Vars(r)["stream"]
 
 		tx, err := db.Begin()
@@ -154,5 +170,5 @@ func getStream(db *sql.DB) http.HandlerFunc {
 			log.Println(err)
 			return
 		}
-	}
+	})
 }
