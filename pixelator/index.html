@@ -2,38 +2,31 @@
 <html>
 
 <head>
-  <meta charset=utf-8 />
-  <title>Pixelator</title>
-  <!--[if IE]>
-      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+  <title>Getting Started</title>
   <style>
-    article,
-    aside,
-    figure,
-    footer,
-    header,
-    hgroup,
-    menu,
-    nav,
-    section {
-      display: block;
+    img {
+      max-height: 400px;
+    }
+
+    #render-target {
+      width: 400px;
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .color-block {
+      width: 80px;
+      height: 80px;
     }
   </style>
-  <script src="./script.js"></script>
 </head>
 
-<body onload="pixelator()">
-  <input type='file' id="fileinput" /><br />
-  Rows : <input type='text' id='rows' value='5' /><br />
-  Cols : <input type='text' id='cols' value='5' /><br />
-
-  <img id="imageLoader" src="#" alt="your image" style="display:none" />
-  <canvas id='originalImage'></canvas><br />
-  <canvas id='outputImage'></canvas><br />
-
-  <div id='outputJson'></div>
+<body>
+  <p>Hell aao</p>
+  <img id="test-image" src="home.jpg" />
+  <div id="render-target"></div>
+  <div id="image-loader" />
 </body>
-<!-- <script type="module" src="bundle.js"></script> -->
+<script type="module" src="bundle.js"></script>
 
 </html>
