@@ -3,6 +3,19 @@ import SAT from 'sat';
 const frontColor = "#F7566A";
 
 
+function drawFillCentered(src, dst) {
+  var aspect = src.width / src.height;
+  var newHeight;
+  var newWidth;
+  if (dst.canvas.clientHeight > dst.canvas.clientWidth) {
+    newHeight = dst.canvas.clientHeight;
+    newWidth = newHeight * aspect;
+  } else {
+    newWidth = dst.canvas.clientWidth;
+    newHeight = newWidth * aspect;
+  }
+  dst.drawImage(src, -(newWidth - dst.canvas.clientWidth) / 2, -(newHeight - dst.canvas.clientHeight) / 2, newWidth, newHeight);
+}
 
 function drawPoint(ctx, x, y, r, color) {
   ctx.beginPath();
@@ -97,17 +110,24 @@ async function setupCamera(video) {
     };
   });
 }
+
 function saveVideoToBuffer(video, buffer) {
   buffer.save();
+
+  let scale = buffer.canvas.height / video.videoHeight;
+  let offset = -(buffer.canvas.width - video.videoWidth * scale) / 2; //
+
+  buffer.scale(scale, scale);
   buffer.scale(-1, 1);
   buffer.translate(-video.videoWidth, 0);
+  buffer.translate(offset * (1 / scale), 0);
   buffer.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
   buffer.restore();
 }
 
 async function getPose(net, video) {
   const pose = await net.estimateSinglePose(video, {
-    flipHorizontal: true,
+    flipHorizontal: false,
     decodingMethod: 'single-person'
   });
   pose.keypoints = pose.keypoints.filter(({score}) => score > 0.6);

@@ -22,6 +22,7 @@ export default {
 
     draw() {
       this.resize(this.$refs.canvas);
+
       this.stateMachine.tick(this.$refs.canvas.getContext("2d"), this.$refs.video, this.$refs.videoBuffer.getContext("2d"), this.net).then(() => {
         window.requestAnimationFrame(this.draw);
       })
@@ -32,6 +33,8 @@ export default {
       if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;
+        this.$refs.videoBuffer.width = width;
+        this.$refs.videoBuffer.height = height;
       }
     },
   },
