@@ -154,7 +154,7 @@ class ColorSteal {
     drawCtx.restore();
     drawKeypoints(pose.keypoints, 0.6, drawCtx);
     // Generate swatch by reading the different keypoints of the pose
-    generateSwatches(videoBuffer.canvas, pose);
+    const swatch = generateSwatches(videoBuffer.canvas, pose);
     // Generate swatch by reading a column of rows of the buffer
     // const swatch = pixelator(videoBuffer.canvas, pose);
 

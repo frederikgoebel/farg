@@ -1,3 +1,4 @@
+/* eslint-disable */
 import RgbQuant from "rgbquant";
 const ROWS = 6;
 
@@ -100,9 +101,9 @@ const getFaceBB = (keypoints) => {
   const rightEar = keypoints.filter(({ part }) => part === "rightEar")[0]
     .position;
   const eye = keypoints.filter(({ part }) => part === "leftEye")[0].position;
-  const startX = leftEar.x;
+  const endX = leftEar.x; // The image is mirrored so it starts from the right...
   const startY = eye.y - 30;
-  const endX = rightEar.x;
+  const startX = rightEar.x;
   const endY = rightEar.y + 30;
 
   return { startX, startY, endX, endY };
@@ -118,10 +119,52 @@ const getUpperBodyBB = (keypoints) => {
   const elbow = keypoints.filter(({ part }) => part === "leftElbow")[0]
     .position;
 
-  const startX = leftShoulder.x;
+  const endX = leftShoulder.x;
   const startY = leftShoulder.y;
-  const endX = rightShoulder.x;
+  const startX = rightShoulder.x;
   const endY = elbow.y;
+
+  return { startX, startY, endX, endY };
+};
+
+const getLowerBodyBB = (keypoints) => {
+  const elbow = keypoints.filter(({ part }) => part === "leftElbow")[0]
+    .position;
+  const leftHip = keypoints.filter(({ part }) => part === "leftHip")[0]
+    .position;
+  const rightHip = keypoints.filter(({ part }) => part === "rightHip")[0]
+    .position;
+
+  const endX = leftHip.x;
+  const startY = elbow.y;
+  const startX = rightHip.x;
+  const endY = rightHip.y;
+
+  return { startX, startY, endX, endY };
+};
+
+const getThighsBB = (keypoints) => {
+  const leftHip = keypoints.filter(({ part }) => part === "leftHip")[0]
+    .position;
+  const rightKnee = keypoints.filter(({ part }) => part === "rightKnee")[0]
+    .position;
+
+  const endX = leftHip.x;
+  const startY = leftHip.y;
+  const startX = rightKnee.x;
+  const endY = rightKnee.y;
+
+  return { startX, startY, endX, endY };
+};
+
+const getFeetBB = (keypoints) => {
+  const leftAnkle = keypoints.filter(({ part }) => part === "leftAnkle")[0]
+    .position;
+
+  const endX = leftAnkle.x - 20;
+  const startY = leftAnkle.y - 20;
+  const startX = leftAnkle.x + 20;
+  const endY = leftAnkle.y + 20;
 
   return { startX, startY, endX, endY };
 };
@@ -131,11 +174,26 @@ export const generateSwatches = (imageCanvas, pose) => {
 
   const faceBB = getFaceBB(keypoints);
   const upperBodyBB = getUpperBodyBB(keypoints);
+  const lowerBodyBB = getLowerBodyBB(keypoints);
+  const thighsBB = getThighsBB(keypoints);
+  const feetBB = getFeetBB(keypoints);
 
   const skinBox = getColor(imageCanvas, faceBB);
   const upperBodyBox = getColor(imageCanvas, upperBodyBB);
+  const lowerBodyBox = getColor(imageCanvas, lowerBodyBB);
+  const thighsBox = getColor(imageCanvas, thighsBB);
+  const feetBox = getColor(imageCanvas, feetBB);
 
-  console.log(skinBox, upperBodyBox);
+  console.log(skinBox, upperBodyBox, lowerBodyBox, thighsBox, feetBox);
+
+  return [
+    [0, 0, 0, 255], // Currently missing hair sampling
+    skinBox,
+    upperBodyBox,
+    lowerBodyBox,
+    thighsBox,
+    feetBox,
+  ];
 };
 
 export default generatePalette;
