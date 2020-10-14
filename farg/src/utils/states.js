@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import gsap from "gsap";
 import {
   saveVideoToBuffer,
@@ -139,6 +141,7 @@ class ColorSteal {
     );
   }
   async tick(drawCtx, video, videoBuffer, posenet) {
+    const pose = await getPose(posenet, videoBuffer.canvas);
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
     drawCtx.save();
     drawCtx.drawImage(
@@ -149,11 +152,11 @@ class ColorSteal {
       videoBuffer.canvas.height
     );
     drawCtx.restore();
-    const pose = await getPose(posenet, videoBuffer.canvas);
+    drawKeypoints(pose.keypoints, 0.6, drawCtx);
     // Generate swatch by reading the different keypoints of the pose
     generateSwatches(videoBuffer.canvas, pose);
     // Generate swatch by reading a column of rows of the buffer
-    const swatch = pixelator(videoBuffer.canvas);
+    // const swatch = pixelator(videoBuffer.canvas, pose);
 
     this.colorCallback(swatch);
     return "idle"; // TOOD return colorSteal until everything is done

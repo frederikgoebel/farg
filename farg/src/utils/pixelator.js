@@ -20,7 +20,8 @@ const options = {
 };
 
 // Generate palette by reading the middle column of the image
-const generatePalette = (imageCanvas) => {
+const generatePalette = (imageCanvas, pose) => {
+  const { keypoints } = pose;
   const colorPalettes = [];
   const imageLoader = document.getElementById("image-loader");
   const canvas = document.createElement("canvas");
@@ -34,7 +35,21 @@ const generatePalette = (imageCanvas) => {
     0,
     0
   );
+  keypoints.forEach((keypoint) => {
+    ctx.beginPath();
+    ctx.ellipse(
+      keypoint.position.x,
+      keypoint.position.y,
+      5,
+      5,
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.stroke();
+  });
 
+  // imageLoader.appendChild(canvas);
   for (let i = 0; i < ROWS; i++) {
     const canvasBlock = document.createElement("canvas");
     canvasBlock.width = blockSize;
