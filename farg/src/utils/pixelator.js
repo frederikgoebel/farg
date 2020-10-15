@@ -1,5 +1,6 @@
 /* eslint-disable */
 import RgbQuant from "rgbquant";
+import getProminentColor from "./colorDifference";
 const ROWS = 6;
 
 // options with defaults (not required)
@@ -88,10 +89,27 @@ const getColor = (imageCanvas, { startX, startY, endX, endY }) => {
   ctx.putImageData(imageData, 0, 0);
   const q = new RgbQuant(options);
   q.sample(canvas);
-  const [red, green, blue, alpha] = q.palette().slice(0, 4);
+  const swatches = q.palette();
+  const div = document.createElement("div");
+  div.style.display = "flex";
+  div.style.border = "1px solid yellow";
+  for (let i = 0; i < swatches.length; i += 4) {
+    const [red, green, blue, alpha] = swatches.slice(i, i + 4);
+    const colorDiv = document.createElement("div");
+    colorDiv.style.width = "33px";
+    colorDiv.style.height = "33px";
+    colorDiv.style.background = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+    div.append(colorDiv);
+  }
+
+  // const [red, green, blue, alpha] = swatches.slice(0, 4);
 
   const imageLoader = document.getElementById("image-loader");
   imageLoader.append(canvas);
+  imageLoader.append(div);
+
+  const [red, green, blue, alpha] = getProminentColor(swatches, canvas);
+
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 };
 
@@ -161,9 +179,9 @@ const getFeetBB = (keypoints) => {
   const leftAnkle = keypoints.filter(({ part }) => part === "leftAnkle")[0]
     .position;
 
-  const endX = leftAnkle.x - 20;
+  const endX = leftAnkle.x + 20;
   const startY = leftAnkle.y - 20;
-  const startX = leftAnkle.x + 20;
+  const startX = leftAnkle.x - 20;
   const endY = leftAnkle.y + 20;
 
   return { startX, startY, endX, endY };
