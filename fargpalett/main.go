@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"github.com/frederikgoebel/farg/fargpalett/rt"
 	"fmt"
 	"log"
 	"net/http"
@@ -51,6 +52,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	hub := rt.NewHub()
 
 	router := mux.NewRouter().StrictSlash(false)
 	router.Handle("/{stream}/swatches", CORS(Preflight())).Methods("OPTIONS")
