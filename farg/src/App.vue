@@ -17,9 +17,11 @@ export default {
   components: {
     Stream,
     Mirror,
+
   },
   data: () => ({
     swatches: [],
+    socket: null,
   }),
   methods: {
     rndColor() {
@@ -35,24 +37,37 @@ export default {
       }
       this.swatches.push(swatch);
 
-      axios.post('http://localhost:8082/debug/swatches', {
+      axios.post('http://' + process.env.SERVER + '/debug/swatches', {
         colors: swatch,
       }).catch(function(error) {
         // handle error
         console.log(error);
       })
+    },
+    receiveMsg(event) {
+      console.log(event.data);
+
+      var msg = JSON.parse(event.data);
+      console.log(msg);
+      this.swatches.push(msg.colors);
     }
   },
   mounted() {
-    axios.get('http://localhost:8082/debug/swatches')
+    axios.get('http://' + process.env.VUE_APP_SERVER + '/debug/swatches')
       .then(response => {
         this.swatches = response.data.colors;
+        if (this.swatches == null)
+          this.swatches = []
         console.log("response", response);
       })
       .catch(function(error) {
         // handle error
         console.log(error);
       })
+
+
+    this.socket = new WebSocket('ws://' + process.env.VUE_APP_SERVER + '/ws');
+    this.socket.onmessage = this.receiveMsg;
   }
 }
 </script>

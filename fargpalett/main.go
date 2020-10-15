@@ -3,10 +3,11 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"github.com/frederikgoebel/farg/fargpalett/rt"
 	"fmt"
 	"log"
 	"net/http"
+
+	"./rt"
 
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
@@ -54,13 +55,19 @@ func main() {
 	}
 
 	hub := rt.NewHub()
+	go hub.Run()
+
+	fs := http.FileServer(http.Dir("./static"))
 
 	router := mux.NewRouter().StrictSlash(false)
+
+	router.Handle("/ws", rt.HandleWebsocket(hub))
 	router.Handle("/{stream}/swatches", CORS(Preflight())).Methods("OPTIONS")
-	router.Handle("/{stream}/swatches", CORS(postSwatch(db))).Methods("POST")
+	router.Handle("/{stream}/swatches", CORS(postSwatch(db, hub))).Methods("POST")
 	router.Handle("/{stream}/swatches", CORS(getStream(db))).Methods("GET")
-	log.Println("Listen and serve on :8082")
-	http.ListenAndServe(":8082", router)
+	router.PathPrefix("/").Handler(fs)
+	log.Println("Listen and serve on :8080")
+	http.ListenAndServe(":80", router)
 }
 
 func Preflight() http.Handler {
@@ -83,7 +90,7 @@ type Swatch struct {
 	Colors []string `json:"colors"`
 }
 
-func postSwatch(db *sql.DB) http.Handler {
+func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		streamID := mux.Vars(r)["stream"]
 		decoder := json.NewDecoder(r.Body)
@@ -121,6 +128,13 @@ func postSwatch(db *sql.DB) http.Handler {
 				return
 			}
 		}
+
+		b, err := json.Marshal(swatch)
+		if err != nil {
+			log.Print(err)
+		}
+		hub.Broadcast <- b
+
 		w.WriteHeader(http.StatusCreated)
 		tx.Commit()
 	})
