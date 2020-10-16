@@ -3,12 +3,15 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"./rt"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -39,6 +42,10 @@ var getColorsForSwatch = `
               	`
 
 func main() {
+
+	var port = flag.String("port", ":8082", "The port used to run the server on.")
+	var loggerOut = os.Stdout // TODO replace with writer to file
+
 	db, err := sql.Open("sqlite3", "./fargpalett.db")
 	if err != nil {
 		log.Fatal(err)
@@ -62,12 +69,12 @@ func main() {
 	router := mux.NewRouter().StrictSlash(false)
 
 	router.Handle("/ws", rt.HandleWebsocket(hub))
-	router.Handle("/{stream}/swatches", CORS(Preflight())).Methods("OPTIONS")
-	router.Handle("/{stream}/swatches", CORS(postSwatch(db, hub))).Methods("POST")
-	router.Handle("/{stream}/swatches", CORS(getStream(db))).Methods("GET")
+	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, CORS(Preflight()))).Methods("OPTIONS")
+	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, CORS(postSwatch(db, hub)))).Methods("POST")
+	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, CORS(getStream(db)))).Methods("GET")
 	router.PathPrefix("/").Handler(fs)
-	log.Println("Listen and serve on :8080")
-	http.ListenAndServe(":80", router)
+	log.Println("Listen and serve on " + *port)
+	http.ListenAndServe(*port, router)
 }
 
 func Preflight() http.Handler {
