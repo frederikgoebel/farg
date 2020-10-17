@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 
-	"./rt"
+	"github.com/frederikgoebel/farg/fargpalett/rt"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
