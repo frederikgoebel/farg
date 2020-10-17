@@ -1,4 +1,5 @@
 import gsap from "gsap";
+import { Blob, Point } from "./blob";
 import { saveVideoToBuffer, drawBody, CollisionBody, getPose, drawKeypoints } from './mirror';
 
 const frontColor = "#F7566A";
@@ -29,8 +30,19 @@ class Idle {
     collisionBody.debugDraw(drawCtx);
     drawKeypoints(pose.keypoints, 0.6, drawCtx);
 
+    let blob = new Blob([])
+    blob.canvas = drawCtx.canvas;
+    pose.keypoints.forEach((keypoint) => {
+      blob.points.push(new Point(keypoint.position.x, keypoint.position.y))
+    })
+
+    // let blob = new Blob([new Point(1, 1), new Point(100, 1), new Point(100, 100), new Point(20, 200), new Point(50, 50)]);
+
+
+    blob.render();
+
     if (allIn)
-      return "found"
+      return "idle"
     return "idle"
   }
 }
