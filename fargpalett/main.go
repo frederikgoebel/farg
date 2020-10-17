@@ -68,17 +68,20 @@ func main() {
 	fs := http.FileServer(http.Dir("./static"))
 
 	router := mux.NewRouter().StrictSlash(false)
-
 	router.Handle("/ws", rt.HandleWebsocket(hub))
 	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, CORS(Preflight()))).Methods("OPTIONS")
 	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, CORS(postSwatch(db, hub)))).Methods("POST")
 	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, CORS(getStream(db)))).Methods("GET")
 	router.PathPrefix("/").Handler(fs)
-	log.Println("Listen and serve on " + *port)
-	err = http.ListenAndServe(*port, router)
-	if err != nil {
-		panic(err)
+
+	server := &http.Server{
+		Addr:    *port,
+		Handler: router,
 	}
+
+	log.Println("Listen and serve on " + *port)
+	log.Fatal(server.ListenAndServe())
+
 }
 
 func Preflight() http.Handler {
