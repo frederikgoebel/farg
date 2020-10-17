@@ -66,7 +66,7 @@ export default {
       })
 
 
-    this.socket = new WebSocket('ws://' + process.env.VUE_APP_SERVER + '/ws');
+    this.socket = new WebSocket('wss://' + process.env.VUE_APP_SERVER + '/ws');
     this.socket.onmessage = this.receiveMsg;
   }
 }
