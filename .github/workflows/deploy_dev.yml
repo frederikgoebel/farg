@@ -63,4 +63,4 @@ jobs:
         host: ${{ secrets.REMOTE_HOST }}
         username: ${{ secrets.REMOTE_USER }}
         key: ${{ secrets.SSH_KEY }}
-        script: chmod +x ${{ secrets.DEV_DIR }}/fargpalett && tmux send-keys -t farg_dev 'C-c' && tmux send-keys -t farg_dev 'cd ${{ secrets.DEV_DIR }}' ENTER && tmux send-keys -t farg_dev './fargpalett -port=:${{ secrets.DEV_PORT }}' ENTER
+        script: chmod +x ${{ secrets.DEV_DIR }}/fargpalett && tmux send-keys -t farg_dev 'C-c' && tmux send-keys -t farg_dev 'cd ${{ secrets.DEV_DIR }}' ENTER && tmux send-keys -t farg_dev './fargpalett -port=${{ secrets.DEV_PORT }}' ENTER
