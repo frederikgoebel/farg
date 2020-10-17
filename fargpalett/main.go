@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"flag"
@@ -11,7 +10,6 @@ import (
 	"os"
 
 	"github.com/frederikgoebel/farg/fargpalett/rt"
-	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -46,7 +44,6 @@ var getColorsForSwatch = `
 func main() {
 
 	var port = flag.String("port", ":8082", "The port used to run the server on.")
-	var useTLS = flag.Bool("tls", true, "If tls should be used or not")
 	flag.Parse()
 	var loggerOut = os.Stdout // TODO replace with writer to file
 
@@ -77,37 +74,14 @@ func main() {
 	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, CORS(getStream(db)))).Methods("GET")
 	router.PathPrefix("/").Handler(fs)
 
-	var tlsConfig *tls.Config
-	certManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist("farg.app", "www.farg.app"),
-		Cache:      autocert.DirCache("certs"),
-	}
-	if *useTLS {
-		tlsConfig = &tls.Config{
-			GetCertificate: certManager.GetCertificate,
-		}
-	}
-
 	server := &http.Server{
-		Addr:      *port,
-		TLSConfig: tlsConfig,
-		Handler:   router,
+		Addr:    *port,
+		Handler: router,
 	}
 
 	log.Println("Listen and serve on " + *port)
-	if *useTLS {
+	log.Fatal(server.ListenAndServe())
 
-		s := &http.Server{
-			Handler: certManager.HTTPHandler(nil),
-			Addr:    ":http",
-		}
-		go s.ListenAndServe()
-
-		log.Fatal(server.ListenAndServeTLS("", ""))
-	} else {
-		log.Fatal(server.ListenAndServe())
-	}
 }
 
 func Preflight() http.Handler {
