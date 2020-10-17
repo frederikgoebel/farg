@@ -37,7 +37,7 @@ export default {
       }
       this.swatches.push(swatch);
 
-      axios.post('http://' + process.env.VUE_APP_SERVER + '/debug/swatches', {
+      axios.post('/api/debug/swatches', {
         colors: swatch,
       }).catch(function(error) {
         // handle error
@@ -53,7 +53,7 @@ export default {
     }
   },
   mounted() {
-    axios.get('http://' + process.env.VUE_APP_SERVER + '/debug/swatches')
+    axios.get('/api/debug/swatches')
       .then(response => {
         this.swatches = response.data.colors;
         if (this.swatches == null)
@@ -66,7 +66,7 @@ export default {
       })
 
 
-    this.socket = new WebSocket('wss://' + process.env.VUE_APP_SERVER + '/ws');
+    this.socket = new WebSocket('wss://' + location.host + '/ws');
     this.socket.onmessage = this.receiveMsg;
   }
 }
