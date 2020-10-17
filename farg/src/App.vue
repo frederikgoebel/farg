@@ -37,7 +37,7 @@ export default {
       }
       this.swatches.push(swatch);
 
-      axios.post('http://' + process.env.SERVER + '/debug/swatches', {
+      axios.post('http://' + process.env.VUE_APP_SERVER + '/debug/swatches', {
         colors: swatch,
       }).catch(function(error) {
         // handle error

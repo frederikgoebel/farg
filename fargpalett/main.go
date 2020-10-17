@@ -44,6 +44,7 @@ var getColorsForSwatch = `
 func main() {
 
 	var port = flag.String("port", ":8082", "The port used to run the server on.")
+	flag.Parse()
 	var loggerOut = os.Stdout // TODO replace with writer to file
 
 	db, err := sql.Open("sqlite3", "./fargpalett.db")
@@ -74,7 +75,10 @@ func main() {
 	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, CORS(getStream(db)))).Methods("GET")
 	router.PathPrefix("/").Handler(fs)
 	log.Println("Listen and serve on " + *port)
-	http.ListenAndServe(*port, router)
+	err = http.ListenAndServe(*port, router)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func Preflight() http.Handler {
