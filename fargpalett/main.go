@@ -78,13 +78,12 @@ func main() {
 	router.PathPrefix("/").Handler(fs)
 
 	var tlsConfig *tls.Config
-
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist("farg.app", "www.farg.app"),
+		Cache:      autocert.DirCache("certs"),
+	}
 	if *useTLS {
-		certManager := autocert.Manager{
-			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist("farg.app", "www.farg.app"),
-			Cache:      autocert.DirCache("certs"),
-		}
 		tlsConfig = &tls.Config{
 			GetCertificate: certManager.GetCertificate,
 		}
@@ -98,6 +97,13 @@ func main() {
 
 	log.Println("Listen and serve on " + *port)
 	if *useTLS {
+
+		s := &http.Server{
+			Handler: certManager.HTTPHandler(nil),
+			Addr:    ":http",
+		}
+		go s.ListenAndServe()
+
 		log.Fatal(server.ListenAndServeTLS("", ""))
 	} else {
 		log.Fatal(server.ListenAndServe())
