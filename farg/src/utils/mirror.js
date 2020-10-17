@@ -65,7 +65,7 @@ class CollisionBody {
   }
   colliding(pose) {
     let allIn = true;
-    if (pose.keypoints.length == 0) return false;
+    if (pose.keypoints.length < 17) return false;
 
     pose.keypoints.forEach(({ position }) => {
       var v = new SAT.Vector(position.x, position.y);
