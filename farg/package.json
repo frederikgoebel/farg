@@ -12,6 +12,7 @@
     "@tensorflow/tfjs": "^2.4.0",
     "@tensorflow/tfjs-converter": "^2.6.0",
     "@tensorflow/tfjs-core": "^2.6.0",
+    "axios": "^0.20.0",
     "core-js": "^2.6.5",
     "gsap": "^3.5.1",
     "rgbquant": "^1.1.2",

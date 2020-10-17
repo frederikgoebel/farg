@@ -7,6 +7,8 @@
 </template>
 
 <script>
+import axios from 'axios'
+
 import Stream from './components/Stream.vue'
 import Mirror from './components/Mirror.vue'
 let swatchAmount = 6;
@@ -16,9 +18,11 @@ export default {
   components: {
     Stream,
     Mirror,
+
   },
   data: () => ({
     swatches: [],
+    socket: null,
   }),
   methods: {
     rndColor() {
@@ -35,7 +39,38 @@ export default {
         }
       }
       this.swatches.push(swatch);
+
+      axios.post(process.env.VUE_APP_API_SERVER + '/debug/swatches', {
+        colors: swatch,
+      }).catch(function(error) {
+        // handle error
+        console.log(error);
+      })
+    },
+    receiveMsg(event) {
+      console.log(event.data);
+
+      var msg = JSON.parse(event.data);
+      console.log(msg);
+      this.swatches.push(msg.colors);
     }
+  },
+  mounted() {
+    axios.get(process.env.VUE_APP_API_SERVER + '/debug/swatches')
+      .then(response => {
+        this.swatches = response.data.colors;
+        if (this.swatches == null)
+          this.swatches = []
+        console.log("response", response);
+      })
+      .catch(function(error) {
+        // handle error
+        console.log(error);
+      })
+
+
+    this.socket = new WebSocket(process.env.VUE_APP_WS_SERVER);
+    this.socket.onmessage = this.receiveMsg;
   }
 }
 </script>
