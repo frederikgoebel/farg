@@ -205,7 +205,7 @@ export const generateSwatches = (imageCanvas, pose) => {
   console.log(skinBox, upperBodyBox, lowerBodyBox, thighsBox, feetBox);
 
   return [
-    [0, 0, 0, 255], // Currently missing hair sampling
+    "black", // Currently missing hair sampling
     skinBox,
     upperBodyBox,
     lowerBodyBox,
