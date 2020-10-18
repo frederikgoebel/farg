@@ -3,6 +3,18 @@
 /* eslint-disable no-unused-vars */
 import SAT from "sat";
 
+const usedKeyPointParts = new Set([
+  "leftEar",
+  "rightEar",
+  "leftShoulder",
+  "rightShoulder",
+  "leftElbow",
+  "leftHip",
+  "rightHip",
+  "rightKnee",
+  "leftAnkle",
+]);
+
 const frontColor = "#F7566A";
 
 function drawFillCentered(src, dst) {
@@ -64,15 +76,24 @@ class CollisionBody {
     ]);
   }
   colliding(pose) {
-    let allIn = true;
-    if (pose.keypoints.length < 17) return false;
+    let remaining = usedKeyPointParts.size;
+    if (pose.keypoints.length < usedKeyPointParts.size) return false;
 
-    pose.keypoints.forEach(({ position }) => {
-      var v = new SAT.Vector(position.x, position.y);
-      allIn &=
-        SAT.pointInPolygon(v, this.body) || SAT.pointInCircle(v, this.circle);
-    });
-    return allIn;
+    for (let i = 0; i < pose.keypoints.length; ++i) {
+      if (usedKeyPointParts.has(pose.keypoints[i].part)) {
+        const v = new SAT.Vector(
+          pose.keypoints[i].position.x,
+          pose.keypoints[i].position.y
+        );
+        if (
+          SAT.pointInPolygon(v, this.body) ||
+          SAT.pointInCircle(v, this.circle)
+        ) {
+          --remaining;
+        }
+      }
+    }
+    return remaining === 0;
   }
 
   debugDraw(ctx) {
