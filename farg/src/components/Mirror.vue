@@ -70,7 +70,7 @@ export default {
   display: flex;
   align-items: stretch;
   height: 100%;
-  width: 30%;
+  width: 100%;
 }
 
 .canvas {

@@ -1,7 +1,7 @@
 <template>
 <div id="app" class="row" @click="addSwatch()">
   <Mirror @swatchAdded="addSwatch" />
-  <Stream :swatches="swatches" />
+  <!-- <Stream :swatches="swatches" /> -->
 </div>
 </template>
 

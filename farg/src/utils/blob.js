@@ -1,9 +1,25 @@
+import Victor from 'victor'
+
 let canvas,
   ctx;
 let render,
   init;
 let blob;
 
+
+function getVector(p1, p2) {
+  return {
+    x: p1.x - p2.x,
+    y: p1.y - p2.y
+  }
+}
+
+function drawEyeLine(leftEye, rightEye) {
+  let le = new Victor(leftEye.position.x, leftEye.position.y);
+  let re = new Victor(rightEye.position.x, rightEye.position.y);
+  let v = le.subtract(re);
+  let scale = v.length / 4 * 3;
+}
 
 function getCenter(points) {
   let center = {
@@ -40,22 +56,52 @@ function clockwise(points) {
 // TOOD keep track of all found points
 // when new one is found expand the blob to there smoothly + reverse
 class Blob {
-  constructor(points) {
-    this.points = points
+  constructor() {
+    this.points = []
+    this.keypoints = {
+      "nose": {
+        x: 0,
+        y: 0
+      },
+      "leftEye": {
+        x: 0,
+        y: 0
+      },
+      "rightEye": {
+        x: 0,
+        y: 0
+      },
+    }
   }
 
-  init() {
-    // for (let i = 0; i < this.numPoints; i++) {
-    //   let point = new Point(this.divisional * (i + 1), this);
-    //   // point.acceleration = -1 + Math.random() * 2;
-    //   this.push(point);
-    // }
+  setPoints(keypoints) {
+    let found = {
+      "nose": false,
+      "leftEye": false,
+      "rightEye": false
+    }
+    keypoints.forEach((keypoint) => {
+      switch (keypoint.part) {
+        case "nose":
+          found[nose] = true
+
+      }
+    })
+
   }
 
   render() {
     let canvas = this.canvas;
     let ctx = this.ctx;
     let center = getCenter(this.points);
+    this.points.forEach((point) => {
+      let v = {
+        x: center.x - point.x,
+        y: center.y - point.y
+      }
+      point.x -= v.x
+      point.y -= v.y
+    })
     let pointsArray = clockwise(this.points);
 
     let p0 = pointsArray[0];
@@ -78,8 +124,8 @@ class Blob {
     ctx.quadraticCurveTo(p1.x, p1.y, xc, yc);
 
     ctx.closePath();
-    ctx.fillStyle = "blue";
-    ctx.fill();
+    // ctx.fillStyle = "blue";
+    // ctx.fill();
     ctx.strokeStyle = 'red';
     ctx.stroke();
 

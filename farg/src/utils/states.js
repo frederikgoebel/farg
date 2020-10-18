@@ -1,7 +1,7 @@
 import gsap from "gsap";
 import { Blob, Point } from "./blob";
 import { saveVideoToBuffer, drawBody, CollisionBody, getPose, drawKeypoints } from './mirror';
-
+import { drawEyeLine } from './skeleton'
 const frontColor = "#F7566A";
 const backColor = "#023F92";
 
@@ -30,16 +30,32 @@ class Idle {
     collisionBody.debugDraw(drawCtx);
     drawKeypoints(pose.keypoints, 0.6, drawCtx);
 
-    let blob = new Blob([])
-    blob.canvas = drawCtx.canvas;
-    pose.keypoints.forEach((keypoint) => {
-      blob.points.push(new Point(keypoint.position.x, keypoint.position.y))
-    })
+    // let blob = new Blob([])
+    // blob.canvas = drawCtx.canvas;
+    // pose.keypoints.forEach((keypoint) => {
+    //   blob.points.push(new Point(keypoint.position.x, keypoint.position.y))
+    // })
 
     // let blob = new Blob([new Point(1, 1), new Point(100, 1), new Point(100, 100), new Point(20, 200), new Point(50, 50)]);
 
 
-    blob.render();
+    //blob.render();
+    let leftEye ,
+      rightEye,
+      nose;
+    pose.keypoints.forEach((keypoint) => {
+      if (keypoint.part == "leftEye")
+        leftEye = keypoint.position
+      if (keypoint.part == "rightEye")
+        rightEye = keypoint.position
+      if (keypoint.part == "nose")
+        nose = keypoint.position
+    })
+    if (leftEye && rightEye && nose) {
+      drawEyeLine(leftEye, rightEye, nose, drawCtx)
+    }
+
+    console.log(pose)
 
     if (allIn)
       return "idle"
