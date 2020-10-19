@@ -1,4 +1,3 @@
-/* eslint-disable */
 import RgbQuant from "rgbquant";
 import getProminentColor from "./colorDifference";
 const ROWS = 6;
