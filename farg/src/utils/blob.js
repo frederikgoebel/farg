@@ -53,7 +53,7 @@ class Blob {
     //   point.x -= v.x
     //   point.y -= v.y
     // })
-    let pointsArray = this.points //clockwise(this.points);
+    let pointsArray = this.points // clockwise(this.points); // 
 
     let p0 = pointsArray[0];
     let p1 = pointsArray[0];
@@ -81,10 +81,18 @@ class Blob {
     ctx.stroke();
     ctx.restore()
 
-    ctx.beginPath();
-    ctx.rect(center.x - 10, center.y - 10, 20, 20);
-    ctx.fillStyle = "pink";
-    ctx.fill();
+
+    this.points.forEach((point) => {
+      ctx.beginPath();
+      ctx.rect(point.x - 10, point.y - 10, 20, 20);
+      ctx.fillStyle = "pink";
+      ctx.fill();
+    })
+
+    // ctx.beginPath();
+    // ctx.rect(center.x - 10, center.y - 10, 20, 20);
+    // ctx.fillStyle = "pink";
+    // ctx.fill();
 
   }
 }

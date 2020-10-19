@@ -47,7 +47,9 @@ class Idle {
     //blob.render();
     let leftEye ,
       rightEye,
-      nose;
+      nose,
+      leftShoulder,
+      rightShoulder;
     pose.keypoints.forEach((keypoint) => {
       if (keypoint.part == "leftEye")
         leftEye = keypoint.position
@@ -55,14 +57,18 @@ class Idle {
         rightEye = keypoint.position
       if (keypoint.part == "nose")
         nose = keypoint.position
+      if (keypoint.part == "leftShoulder")
+        leftShoulder = keypoint.position
+      if (keypoint.part == "rightShoulder")
+        rightShoulder = keypoint.position
     })
 
-    this.shapeshifter.tick(leftEye, rightEye, nose, drawCtx)
+    this.shapeshifter.tick(pose.keypoints, drawCtx)
 
 
 
 
-    console.log(pose)
+    // console.log(pose)
 
     if (allIn)
       return "idle"
