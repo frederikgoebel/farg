@@ -46,7 +46,7 @@ class Idle {
 }
 
 class Found {
-  constructor() {
+  constructor(setTickEnabled) {
     this.bodyObj = {
       lineWidth: 5,
     };
@@ -57,6 +57,7 @@ class Found {
       lineWidth: 200,
       ease: "sine.in",
     });
+    this.setTickEnabled = setTickEnabled;
   }
 
   async tick(drawCtx, video, videoBuffer, posenet) {
@@ -68,7 +69,10 @@ class Found {
       drawCtx.canvas.height / 280
     );
 
+    this.setTickEnabled && this.setTickEnabled(false);
     saveVideoToBuffer(video, videoBuffer);
+    this.setTickEnabled && this.setTickEnabled(true);
+
     let pose = await getPose(posenet, videoBuffer.canvas);
     let allIn = collisionBody.colliding(pose);
 
