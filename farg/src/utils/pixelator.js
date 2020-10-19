@@ -112,6 +112,22 @@ const getColor = (imageCanvas, { startX, startY, endX, endY }) => {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 };
 
+const getHairBB = (keypoints) => {
+  const leftEar = keypoints.filter(({ part }) => part === "leftEar")[0]
+    .position;
+  const leftEye = keypoints.filter(({ part }) => part === "leftEye")[0]
+    .position;
+  const rightEar = keypoints.filter(({ part }) => part === "rightEar")[0]
+    .position;
+
+  const endX = leftEar.x;
+  const startX = rightEar.x;
+  const startY = leftEye.y - 45;
+  const endY = leftEye.y - 30;
+
+  return { startX, startY, endX, endY };
+};
+
 const getFaceBB = (keypoints) => {
   const leftEar = keypoints.filter(({ part }) => part === "leftEar")[0]
     .position;
@@ -189,28 +205,21 @@ const getFeetBB = (keypoints) => {
 export const generateSwatches = (imageCanvas, pose) => {
   const { keypoints } = pose;
 
+  const hairBB = getHairBB(keypoints);
   const faceBB = getFaceBB(keypoints);
   const upperBodyBB = getUpperBodyBB(keypoints);
   const lowerBodyBB = getLowerBodyBB(keypoints);
   const thighsBB = getThighsBB(keypoints);
   const feetBB = getFeetBB(keypoints);
 
+  const hairBox = getColor(imageCanvas, hairBB);
   const skinBox = getColor(imageCanvas, faceBB);
   const upperBodyBox = getColor(imageCanvas, upperBodyBB);
   const lowerBodyBox = getColor(imageCanvas, lowerBodyBB);
   const thighsBox = getColor(imageCanvas, thighsBB);
   const feetBox = getColor(imageCanvas, feetBB);
 
-  console.log(skinBox, upperBodyBox, lowerBodyBox, thighsBox, feetBox);
-
-  return [
-    "black", // Currently missing hair sampling
-    skinBox,
-    upperBodyBox,
-    lowerBodyBox,
-    thighsBox,
-    feetBox,
-  ];
+  return [hairBox, skinBox, upperBodyBox, lowerBodyBox, thighsBox, feetBox];
 };
 
 export default generatePalette;
