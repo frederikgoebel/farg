@@ -1,26 +1,3 @@
-import Victor from 'victor'
-
-let canvas,
-  ctx;
-let render,
-  init;
-let blob;
-
-
-function getVector(p1, p2) {
-  return {
-    x: p1.x - p2.x,
-    y: p1.y - p2.y
-  }
-}
-
-function drawEyeLine(leftEye, rightEye) {
-  let le = new Victor(leftEye.position.x, leftEye.position.y);
-  let re = new Victor(rightEye.position.x, rightEye.position.y);
-  let v = le.subtract(re);
-  let scale = v.length / 4 * 3;
-}
-
 function getCenter(points) {
   let center = {
     x: 0,
@@ -45,9 +22,9 @@ function clockwise(points) {
       x: p.x,
       y: p.y
     })
-    ps.sort((p1, p2) => {
-      return p1.a - p2.a
-    })
+  })
+  ps.sort((p1, p2) => {
+    return p1.a - p2.a
   })
   return ps
 }
@@ -56,53 +33,27 @@ function clockwise(points) {
 // TOOD keep track of all found points
 // when new one is found expand the blob to there smoothly + reverse
 class Blob {
-  constructor() {
-    this.points = []
-    this.keypoints = {
-      "nose": {
-        x: 0,
-        y: 0
-      },
-      "leftEye": {
-        x: 0,
-        y: 0
-      },
-      "rightEye": {
-        x: 0,
-        y: 0
-      },
-    }
+  constructor(points) {
+    this.points = points
   }
 
-  setPoints(keypoints) {
-    let found = {
-      "nose": false,
-      "leftEye": false,
-      "rightEye": false
-    }
-    keypoints.forEach((keypoint) => {
-      switch (keypoint.part) {
-        case "nose":
-          found[nose] = true
+  render(ctx, color, offset, mode) {
 
-      }
-    })
-
-  }
-
-  render() {
-    let canvas = this.canvas;
-    let ctx = this.ctx;
+    ctx.save();
+    ctx.globalCompositeOperation = mode;
+    ctx.translate(offset.x, offset.y)
+    // let canvas = this.canvas;
+    // let ctx = this.ctx;
     let center = getCenter(this.points);
-    this.points.forEach((point) => {
-      let v = {
-        x: center.x - point.x,
-        y: center.y - point.y
-      }
-      point.x -= v.x
-      point.y -= v.y
-    })
-    let pointsArray = clockwise(this.points);
+    // this.points.forEach((point) => {
+    //   let v = {
+    //     x: center.x - point.x,
+    //     y: center.y - point.y
+    //   }
+    //   point.x -= v.x
+    //   point.y -= v.y
+    // })
+    let pointsArray = this.points //clockwise(this.points);
 
     let p0 = pointsArray[0];
     let p1 = pointsArray[0];
@@ -123,11 +74,12 @@ class Blob {
     var yc = (p1.y + _p2.y) / 2;
     ctx.quadraticCurveTo(p1.x, p1.y, xc, yc);
 
+
     ctx.closePath();
-    // ctx.fillStyle = "blue";
-    // ctx.fill();
-    ctx.strokeStyle = 'red';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 10;
     ctx.stroke();
+    ctx.restore()
 
     ctx.beginPath();
     ctx.rect(center.x - 10, center.y - 10, 20, 20);
@@ -135,85 +87,6 @@ class Blob {
     ctx.fill();
 
   }
-
-  push(item) {
-    if (item instanceof Point) {
-      this.points.push(item);
-    }
-  }
-
-  set color(value) {
-    this._color = value;
-  }
-  get color() {
-    return this._color || '#000000';
-  }
-
-  set canvas(value) {
-    if (value instanceof HTMLElement && value.tagName.toLowerCase() === 'canvas') {
-      this._canvas = value;
-      this.ctx = this._canvas.getContext('2d');
-    }
-  }
-  get canvas() {
-    return this._canvas;
-  }
-
-  set numPoints(value) {
-    if (value > 2) {
-      this._points = value;
-    }
-  }
-  get numPoints() {
-    return this._points || 32;
-  }
-
-  set radius(value) {
-    if (value > 0) {
-      this._radius = value;
-    }
-  }
-  get radius() {
-    return this._radius || 150;
-  }
-
-  set position(value) {
-    if (typeof value == 'object' && value.x && value.y) {
-      this._position = value;
-    }
-  }
-  get position() {
-    return this._position || {
-        x: 0.5,
-        y: 0.5
-      };
-  }
-
-  get divisional() {
-    return Math.PI * 2 / this.numPoints;
-  }
-
-  get center() {
-    return {
-      x: this.canvas.width * this.position.x,
-      y: this.canvas.height * this.position.y
-    };
-  }
-
-  set running(value) {
-    this._running = value === true;
-  }
-  get running() {
-    return this.running !== false;
-  }
 }
 
-class Point {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-  }
-}
-
-
-export { Blob, Point }
+export { Blob }

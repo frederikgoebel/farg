@@ -1,14 +1,19 @@
 import gsap from "gsap";
 import { Blob, Point } from "./blob";
 import { saveVideoToBuffer, drawBody, CollisionBody, getPose, drawKeypoints } from './mirror';
-import { drawEyeLine } from './skeleton'
+import { drawEyeLine, Shapeshifter } from './skeleton'
 const frontColor = "#F7566A";
 const backColor = "#023F92";
 
 
 
 class Idle {
-  constructor() {}
+  constructor() {
+    this.shapeshifter = new Shapeshifter({
+      x: 200,
+      y: 400
+    })
+  }
   async tick(drawCtx, video, videoBuffer, posenet) {
     let collisionBody = new CollisionBody({
       x: 20,
@@ -51,9 +56,11 @@ class Idle {
       if (keypoint.part == "nose")
         nose = keypoint.position
     })
-    if (leftEye && rightEye && nose) {
-      drawEyeLine(leftEye, rightEye, nose, drawCtx)
-    }
+
+    this.shapeshifter.tick(leftEye, rightEye, nose, drawCtx)
+
+
+
 
     console.log(pose)
 
