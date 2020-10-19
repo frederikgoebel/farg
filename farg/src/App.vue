@@ -1,5 +1,5 @@
 <template>
-<div id="app" class="row" @click="addSwatch()">
+<div id="app" class="row">
   <Mirror @swatchAdded="addSwatch" />
   <Stream :swatches="swatches" />
   <div id="image-loader" />
