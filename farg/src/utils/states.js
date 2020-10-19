@@ -61,6 +61,7 @@ class Found {
   }
 
   async tick(drawCtx, video, videoBuffer, posenet) {
+    this.setTickEnabled && this.setTickEnabled(false);
     let collisionBody = new CollisionBody(
       {
         x: 20,
@@ -69,7 +70,6 @@ class Found {
       drawCtx.canvas.height / 280
     );
 
-    this.setTickEnabled && this.setTickEnabled(false);
     saveVideoToBuffer(video, videoBuffer);
     this.setTickEnabled && this.setTickEnabled(true);
 
