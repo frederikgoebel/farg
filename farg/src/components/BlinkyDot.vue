@@ -16,9 +16,9 @@ export default {
   width: 0.7rem;
   height: 0.7rem;
   display: inline-block;
-  background: #6FDA67;
+  background: #46D53B;
   margin-right: 20px;
-  animation: 1.5s blink ease infinite;
+  animation: 1.7s blink ease infinite;
 }
 
 .live-bullet::before {
