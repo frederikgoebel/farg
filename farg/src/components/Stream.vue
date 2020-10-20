@@ -1,9 +1,13 @@
 <template>
 <transition-group name="stream" tag="div" id="color-stream" class="row">
   <div key="loadingMsg" v-if="isLoading">Loading ...</div>
-  <div v-else v-for="(swatch, index) in swatches" :key="`swatch-${index}`" class="color-column" :class="{ squash: preview}">
-    <div v-for=" (color, index) in swatch" :key="`color-${index}`" class="color-field" :style="{background:  color  }">
+  <div v-else v-for="(swatch, swatchIndex) in swatches" :key="`swatch-${swatchIndex}`" @click="selectSwatch(swatchIndex)" class="color-column" :class="{squash: preview, large: selectedSwatch==swatchIndex}">
+    <div v-for=" (color, colorIndex) in swatch" :key="`color-${colorIndex}`" class="color-field" :style="{background:  color}">
+      <div :class="{hidden: selectedSwatch!=swatchIndex}" class="color-info">
+        {{color}}
+      </div>
     </div>
+    <div class="swatch-info">Yesterday</div>
   </div>
 </transition-group>
 </template>
@@ -15,6 +19,7 @@ export default {
   data: () => ({
     isLoading: true,
     swatches: [],
+    selectedSwatch: 4,
   }),
   components: {},
   props: {
@@ -25,6 +30,12 @@ export default {
     preview: Boolean,
   },
   methods: {
+    selectSwatch(index) {
+      if (index == this.selectedSwatch)
+        this.selectedSwatch = null;
+      else
+        this.selectedSwatch = index;
+    },
     addSwatch(swatch) {
       this.swatches.push(swatch);
 
@@ -89,6 +100,7 @@ export default {
   padding-left: 10px;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
 }
 
 .squash {
@@ -116,6 +128,32 @@ export default {
 
 .stream-enter {
   flex-grow: 0.0000001;
+}
+
+.swatch-info {
+  color: gray;
+  font-size: 0.8rem;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.color-info {
+  padding-left: 16px;
+  padding-top: 16px;
+  color: white;
+  font-size: 0.8rem;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.color-info.hidden {
+  opacity: 0.0;
+}
+
+.large {
+  width: 300px;
 }
 
 /* .color-column:hover {
