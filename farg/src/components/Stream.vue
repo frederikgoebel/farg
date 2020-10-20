@@ -3,8 +3,8 @@
   <div key="loadingMsg" v-if="isLoading">Loading ...</div>
   <div v-else v-for="(swatch, swatchIndex) in swatches" :key="`swatch-${swatchIndex}`" @click="selectSwatch(swatchIndex)" class="color-column" :class="{squash: preview, large: selectedSwatch==swatchIndex}">
     <div v-for=" (color, colorIndex) in swatch" :key="`color-${colorIndex}`" class="color-field" :style="{background:  color}">
-      <div :class="{hidden: selectedSwatch!=swatchIndex}" class="color-info">
-        {{color}}
+      <div :class="{hidden: selectedSwatch!=swatchIndex}" class="color-info" :style="{color: invertColor(rgbaToHex(color),true)}">
+        {{rgbaToHex(color)}}
       </div>
     </div>
     <div v-if="!preview" class="swatch-info">Yesterday</div>
@@ -14,6 +14,7 @@
 
 <script>
 import axios from 'axios';
+import { rgbaToHex, invertColor } from '../utils/invertColor';
 
 export default {
   data: () => ({
@@ -30,6 +31,8 @@ export default {
     preview: Boolean,
   },
   methods: {
+    rgbaToHex,
+    invertColor,
     selectSwatch(index) {
       if (index == this.selectedSwatch)
         this.selectedSwatch = null;
@@ -53,6 +56,7 @@ export default {
       console.log(msg);
       this.swatches.push(msg.colors);
     }
+
   },
   mounted() {
     this.isLoading = true;
