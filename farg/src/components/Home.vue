@@ -6,42 +6,9 @@
       <span class="live-bullet"></span>Live from <b>Visual Arena</b>
     </TitleCard>
   </div>
-  <div class="container item-100 lower-line pt-64 pl-64 pr-64">
-    <h2>Newest color streams</h2>
-    <a>Add own stream</a>
-  </div>
-  <div class="container item-100 ">
-    <div class="feed-item item-25 lower-line container-v">
-      <Stream preview streamID="debugsdd" />
-      <div class="info-box">Hugo</div>
-    </div>
-    <div class="feed-item item-25 lower-line">
-      <Stream preview streamID="debug" />
-      <TitleCard>
-        Live from <b>Visual Arena</b>
-      </TitleCard>
-    </div>
-    <div class="feed-item item-25 lower-line">
-      <Stream preview streamID="debug" />
-      <TitleCard>
-        Live from <b>Visual Arena</b>
-      </TitleCard>
-    </div>
-    <div class="feed-item item-25 lower-line">
-      <Stream preview streamID="debug" />
-      <TitleCard>
-        Live from <b>Visual Arena</b>
-      </TitleCard>
-    </div>
-    <div class="feed-item item-25 lower-line">
-      <Stream preview streamID="debug" />
-      <TitleCard>
-        Live from <b>Visual Arena</b>
-      </TitleCard>
-    </div>
-  </div>
+</div>
 
-  <!-- <Mirror @swatchAdded="addSwatch" />
+<!-- <Mirror @swatchAdded="addSwatch" />
 
   <div id="image-loader" /> -->
 </div>
@@ -63,4 +30,23 @@ export default {
 </script>
 
 <style scoped>
+.feature-stream {
+  height: 80vh;
+  width: 100%;
+  display: flex;
+  position: relative;
+}
+
+.live-bullet {
+  border-radius: 90px;
+  width: 0.7rem;
+  height: 0.7rem;
+  display: inline-block;
+  background: #6FDA67;
+  margin-right: 20px;
+}
+
+.live-bullet::before {
+  content: '';
+}
 </style>

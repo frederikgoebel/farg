@@ -1,6 +1,6 @@
 <template>
 <transition-group name="stream" tag="div" id="color-stream" class="row">
-  <div class="center" key="loadingMsg" v-if="isLoading">Loading ...</div>
+  <div key="loadingMsg" v-if="isLoading">Loading ...</div>
   <div v-else v-for="(swatch, index) in swatches" :key="`swatch-${index}`" class="color-column" :class="{ squash: preview}">
     <div v-for=" (color, index) in swatch" :key="`color-${index}`" class="color-field" :style="{background:  color  }">
     </div>
