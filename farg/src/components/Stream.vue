@@ -7,7 +7,7 @@
         {{color}}
       </div>
     </div>
-    <div class="swatch-info">Yesterday</div>
+    <div v-if="!preview" class="swatch-info">Yesterday</div>
   </div>
 </transition-group>
 </template>
@@ -19,7 +19,7 @@ export default {
   data: () => ({
     isLoading: true,
     swatches: [],
-    selectedSwatch: 4,
+    selectedSwatch: null,
   }),
   components: {},
   props: {

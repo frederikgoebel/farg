@@ -5,6 +5,7 @@ import VueRouter from 'vue-router'
 
 import Home from './components/Home'
 import About from './components/About'
+import Presentation from './components/Presentation'
 
 Vue.config.productionTip = false
 
@@ -20,7 +21,7 @@ const routes = [
   },
   {
     path: '/presentation',
-    component: Home
+    component: Presentation
   },
 ]
 
