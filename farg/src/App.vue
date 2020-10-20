@@ -1,10 +1,12 @@
 <template>
 <div id="app" class="container">
-  <header class="header container lower-line">
-    <div class="container">
-      <img class="logo" src="./assets/farg_logo.png">
-      <h1 class="page-title">FÄRG</h1>
-    </div>
+  <header v-if="showHeader" class="header container lower-line">
+    <router-link to="/" exact>
+      <div class="container">
+        <img class="logo" src="./assets/farg_logo.png">
+        <h1 class="page-title">FÄRG</h1>
+      </div>
+    </router-link>
     <nav class="right menu-box">
       <router-link to="/" exact>Feed</router-link>
       <router-link to="/about">About</router-link>
@@ -17,6 +19,12 @@
 <script>
 export default {
   name: 'app',
+  data: () => ({}),
+  computed: {
+    showHeader() {
+      return this.$route.path != "/presentation"
+    }
+  }
 }
 </script>
 
