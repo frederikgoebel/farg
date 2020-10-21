@@ -9,15 +9,15 @@ import {
   drawKeypoints,
 } from "./mirror";
 
-import pixelator, {
-  generateSwatches,
+import { generateSwatches } from "./pixelator";
+import {
   getHairBB,
   getFaceBB,
   getUpperBodyBB,
   getLowerBodyBB,
   getThighsBB,
   getFeetBB,
-} from "./pixelator";
+} from "./getBoundingBoxes";
 
 import { Parallel, Sequential, LineAnimation } from "./animation";
 
