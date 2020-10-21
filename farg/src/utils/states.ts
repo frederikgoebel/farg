@@ -6,7 +6,7 @@ import {
   drawBody,
   CollisionBody,
   getPose,
-  drawKeypoints,
+  drawKeypoints
 } from "./mirror";
 
 import generateSwatches from "./pixelator";
@@ -16,14 +16,17 @@ import {
   getUpperBodyBB,
   getLowerBodyBB,
   getThighsBB,
-  getFeetBB,
+  getFeetBB
 } from "./getBoundingBoxes";
+
+import { Swatch } from "./pixelator";
 
 import {
   Parallel,
   Sequential,
   LineAnimation,
   PaletteAnimation,
+  Animation
 } from "./animation";
 
 const frontColor = "#F7566A";
@@ -35,7 +38,7 @@ class Idle {
     let collisionBody = new CollisionBody(
       {
         x: 20,
-        y: 0,
+        y: 0
       },
       drawCtx.canvas.height / 280
     );
@@ -61,16 +64,22 @@ class Idle {
 }
 
 class Found {
-  constructor(setTickEnabled) {
+  bodyObj: {
+    lineWidth: number;
+  };
+  fadeTl: gsap.core.Timeline;
+  setTickEnabled: (boolean) => unknown;
+
+  constructor(setTickEnabled: (enabled: boolean) => unknown) {
     this.bodyObj = {
-      lineWidth: 5,
+      lineWidth: 5
     };
     this.fadeTl = gsap.timeline({});
     this.fadeTl.pause();
     this.fadeTl.to(this.bodyObj, {
       duration: 3,
       lineWidth: 200,
-      ease: "sine.in",
+      ease: "sine.in"
     });
     this.setTickEnabled = setTickEnabled;
   }
@@ -80,7 +89,7 @@ class Found {
     let collisionBody = new CollisionBody(
       {
         x: 20,
-        y: 0,
+        y: 0
       },
       drawCtx.canvas.height / 280
     );
@@ -115,16 +124,21 @@ class Found {
 }
 
 class Flash {
+  flashObj: {
+    lumen: number;
+  };
+  flashTl: gsap.core.Timeline;
+
   constructor() {
     this.flashObj = {
-      lumen: 1.0,
+      lumen: 1.0
     };
     this.flashTl = gsap.timeline({});
     this.flashTl.pause();
     this.flashTl.to(this.flashObj, {
       lumen: 0.0,
       duration: 0.7,
-      ease: "power4.inOut",
+      ease: "power4.inOut"
     });
   }
 
@@ -151,13 +165,20 @@ class Flash {
 }
 
 class ColorSteal {
+  colorCallback: (swatch: Swatch) => unknown;
+  FIRST_TIME: boolean = true;
+  pose: any;
+  boundingBoxes: any;
+  swatch: Swatch = [];
+  ANIMATION_FINISHED: boolean = false;
+  lastUpdate?: number;
+  deltaTime: number = 0;
+  animation?: Animation;
+
   constructor(colorCallback) {
     this.colorCallback = colorCallback;
-    this.FIRST_TIME = true;
     this.pose = null;
     this.boundingBoxes = null;
-    this.swatch = null;
-    this.ANIMATION_FINISHED = false;
   }
 
   rndColor() {
@@ -193,7 +214,7 @@ class ColorSteal {
         getUpperBodyBB(keypoints),
         getLowerBodyBB(keypoints),
         getThighsBB(keypoints),
-        getFeetBB(keypoints),
+        getFeetBB(keypoints)
       ];
 
       drawCtx.lineWidth = 1;
@@ -202,12 +223,12 @@ class ColorSteal {
       // Generate swatches by reading the different keypoints of the pose
       const swatches = generateSwatches(videoBuffer.canvas, this.pose);
 
-      const palettes = swatches.map((s) => s.palette);
+      const palettes = swatches.map(s => s.palette);
 
-      this.swatch = swatches.map((s) => s.prominentColor);
+      this.swatch = swatches.map(s => s.prominentColor);
 
       const DURATION_MS = 3000;
-      const lineAnimations = this.boundingBoxes.map((bb) => {
+      const lineAnimations = this.boundingBoxes.map(bb => {
         const topHorizontal = new LineAnimation(
           drawCtx,
           { x: bb.startX, y: bb.startY },
@@ -269,8 +290,10 @@ class ColorSteal {
       this.colorCallback(this.swatch);
       this.FIRST_TIME = true;
       this.ANIMATION_FINISHED = false;
+      this.deltaTime = 0;
+
       delete this.lastUpdate;
-      delete this.deltaTime;
+
       return "idle";
     } else {
       return "colorSteal"; // TODO return colorSteal until everything is done

@@ -24,7 +24,6 @@ export default {
   overflow: hidden;
   flex-direction: row-reverse;
 }
-
 .color-column {
   height: 100%;
   flex-grow: 1;
@@ -33,16 +32,13 @@ export default {
   display: flex;
   flex-direction: column;
 }
-
 .color-field {
   flex-grow: 1;
   background: red;
 }
-
 .stream-enter {
   flex-grow: 0.0000001;
 }
-
 .color-column:hover {
   width: 200px;
 }
