@@ -1,6 +1,6 @@
 import { Vector2 } from 'three';
 import drawPathShape from './blob'
-
+import SimplexNoise from 'simplex-noise'
 
 function toPoseDict(keypoints) {
   let out = {}
@@ -154,6 +154,8 @@ class Shapeshifter {
   constructor(position) {
     this.speed = 0.1
     this.damp = 0.2
+    this.simplex = new SimplexNoise()
+    this.time = 0
 
     this.defaultPoints = pointsOnCircle(9, position, 100)
     this.shape = pointsOnCircle(9, position, 100);
@@ -165,7 +167,7 @@ class Shapeshifter {
 
     let newPoints = [];
     this.defaultPoints.forEach((p) => {
-      newPoints.push(new Vector2(p.x, p.y))
+      newPoints.push(new Vector2(p.x + this.simplex.noise2D(p.x, this.time) * 40 - 20, p.y + this.simplex.noise2D(p.y, this.time) * 40 - 20))
     })
 
     let poseDict = toPoseDict(keypoints)
@@ -198,7 +200,7 @@ class Shapeshifter {
       point.y += point.v.y
       point.v.multiplyScalar(this.damp)
     })
-
+    this.time += 0.01;
 
   }
 }

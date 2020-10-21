@@ -19,6 +19,8 @@ function drawPathShape(ctx, points) {
   var xc = (p1.x + _p2.x) / 2;
   var yc = (p1.y + _p2.y) / 2;
   ctx.quadraticCurveTo(p1.x, p1.y, xc, yc);
+  ctx.quadraticCurveTo(_p2.x, _p2.y, xc, yc);
+  // ctx.lineTo(_p2.x, _p2.y)
   ctx.closePath();
 }
 

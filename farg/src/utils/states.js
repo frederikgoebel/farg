@@ -42,28 +42,24 @@ class Idle {
     drawKeypoints(pose.keypoints, 0.6, drawCtx);
 
     drawCtx.save();
-    drawCtx.lineWidth = 20;
+    drawCtx.lineWidth = 15;
     drawCtx.globalCompositeOperation = "screen";
 
     drawCtx.translate(0, 0);
     drawPathShape(drawCtx, this.shapeshifter.shape)
-    drawCtx.strokeStyle = "red";
+    drawCtx.strokeStyle = "#FF0000";
     drawCtx.stroke();
 
-    drawCtx.translate(5, 0);
+    drawCtx.translate(7, 0);
     drawPathShape(drawCtx, this.shapeshifter.shape)
-    drawCtx.strokeStyle = "blue";
+    drawCtx.strokeStyle = "#1EFF33";
     drawCtx.stroke();
 
-    drawCtx.translate(-3, 4);
+    drawCtx.translate(-9, 4);
     drawPathShape(drawCtx, this.shapeshifter.shape)
-    drawCtx.strokeStyle = "green";
+    drawCtx.strokeStyle = "#E864FF";
     drawCtx.stroke();
 
-    drawCtx.translate(-4, -6);
-    drawPathShape(drawCtx, this.shapeshifter.shape)
-    drawCtx.strokeStyle = "cyan";
-    drawCtx.stroke();
 
     drawCtx.restore()
 
