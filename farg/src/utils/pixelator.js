@@ -112,7 +112,7 @@ const getColor = (imageCanvas, { startX, startY, endX, endY }) => {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 };
 
-const getHairBB = (keypoints) => {
+export const getHairBB = (keypoints) => {
   const leftEar = keypoints.filter(({ part }) => part === "leftEar")[0]
     .position;
   const leftEye = keypoints.filter(({ part }) => part === "leftEye")[0]
@@ -128,7 +128,7 @@ const getHairBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-const getFaceBB = (keypoints) => {
+export const getFaceBB = (keypoints) => {
   const leftEar = keypoints.filter(({ part }) => part === "leftEar")[0]
     .position;
   const rightEar = keypoints.filter(({ part }) => part === "rightEar")[0]
@@ -142,7 +142,7 @@ const getFaceBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-const getUpperBodyBB = (keypoints) => {
+export const getUpperBodyBB = (keypoints) => {
   const leftShoulder = keypoints.filter(
     ({ part }) => part === "leftShoulder"
   )[0].position;
@@ -160,7 +160,7 @@ const getUpperBodyBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-const getLowerBodyBB = (keypoints) => {
+export const getLowerBodyBB = (keypoints) => {
   const elbow = keypoints.filter(({ part }) => part === "leftElbow")[0]
     .position;
   const leftHip = keypoints.filter(({ part }) => part === "leftHip")[0]
@@ -176,7 +176,7 @@ const getLowerBodyBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-const getThighsBB = (keypoints) => {
+export const getThighsBB = (keypoints) => {
   const leftHip = keypoints.filter(({ part }) => part === "leftHip")[0]
     .position;
   const rightKnee = keypoints.filter(({ part }) => part === "rightKnee")[0]
@@ -190,7 +190,7 @@ const getThighsBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-const getFeetBB = (keypoints) => {
+export const getFeetBB = (keypoints) => {
   const leftAnkle = keypoints.filter(({ part }) => part === "leftAnkle")[0]
     .position;
 

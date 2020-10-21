@@ -9,7 +9,17 @@ import {
   drawKeypoints,
 } from "./mirror";
 
-import pixelator, { generateSwatches } from "./pixelator";
+import pixelator, {
+  generateSwatches,
+  getHairBB,
+  getFaceBB,
+  getUpperBodyBB,
+  getLowerBodyBB,
+  getThighsBB,
+  getFeetBB,
+} from "./pixelator";
+
+import { Parallel, Sequential, LineAnimation } from "./animation";
 
 const frontColor = "#F7566A";
 const backColor = "#023F92";
@@ -138,14 +148,25 @@ class Flash {
 class ColorSteal {
   constructor(colorCallback) {
     this.colorCallback = colorCallback;
+    this.FIRST_TIME = true;
+    this.pose = null;
+    this.boundingBoxes = null;
+    this.swatch = null;
+    this.ANIMATION_FINISHED = false;
   }
+
   rndColor() {
     return (
       "#" + (0x1000000 + Math.random() * 0xffffff).toString(16).substr(1, 6)
     );
   }
   async tick(drawCtx, video, videoBuffer, posenet) {
-    const pose = await getPose(posenet, videoBuffer.canvas);
+    const now = Date.now();
+    if (this.lastUpdate) {
+      this.deltaTime = now - this.lastUpdate;
+    }
+    this.lastUpdate = now;
+
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
     drawCtx.save();
     drawCtx.drawImage(
@@ -156,12 +177,81 @@ class ColorSteal {
       videoBuffer.canvas.height
     );
     drawCtx.restore();
-    drawKeypoints(pose.keypoints, 0.6, drawCtx);
-    // Generate swatch by reading the different keypoints of the pose
-    const swatch = generateSwatches(videoBuffer.canvas, pose);
 
-    this.colorCallback(swatch);
-    return "idle"; // TOOD return colorSteal until everything is done
+    if (this.FIRST_TIME) {
+      this.pose = await getPose(posenet, videoBuffer.canvas);
+
+      const { keypoints } = this.pose;
+      this.boundingBoxes = [
+        getHairBB(keypoints),
+        getFaceBB(keypoints),
+        getUpperBodyBB(keypoints),
+        getLowerBodyBB(keypoints),
+        getThighsBB(keypoints),
+        getFeetBB(keypoints),
+      ];
+
+      drawCtx.lineWidth = 1;
+      drawCtx.strokeStyle = "white";
+
+      const DURATION_MS = 3000;
+      const lineAnimations = this.boundingBoxes.map((bb) => {
+        const topHorizontal = new LineAnimation(
+          drawCtx,
+          { x: bb.startX, y: bb.startY },
+          { x: bb.endX, y: bb.startY },
+          DURATION_MS
+        );
+        const bottomHorizontal = new LineAnimation(
+          drawCtx,
+          { x: bb.endX, y: bb.endY },
+          { x: bb.startX, y: bb.endY },
+          DURATION_MS
+        );
+        const leftVertical = new LineAnimation(
+          drawCtx,
+          { x: bb.startX, y: bb.startY },
+          { x: bb.startX, y: bb.endY },
+          DURATION_MS
+        );
+        const rightVertical = new LineAnimation(
+          drawCtx,
+          { x: bb.endX, y: bb.endY },
+          { x: bb.endX, y: bb.startY },
+          DURATION_MS
+        );
+        return new Parallel(
+          topHorizontal,
+          bottomHorizontal,
+          leftVertical,
+          rightVertical
+        );
+      });
+
+      this.animation = new Sequential(new Parallel(...lineAnimations));
+
+      // Generate swatch by reading the different keypoints of the pose
+      this.swatch = generateSwatches(videoBuffer.canvas, this.pose);
+      this.FIRST_TIME = false;
+    }
+
+    if (this.animation) {
+      this.ANIMATION_FINISHED = this.animation.update(this.deltaTime);
+      if (this.ANIMATION_FINISHED) delete this.animation;
+    }
+
+    // drawKeypoints(pose.keypoints, 0.6, drawCtx);
+
+    if (this.ANIMATION_FINISHED) {
+      this.colorCallback(this.swatch);
+      this.FIRST_TIME = true;
+      this.ANIMATION_FINISHED = false;
+      delete this.lastUpdate;
+      delete this.deltaTime;
+      return "idle";
+    } else {
+      return "colorSteal"; // TODO return colorSteal until everything is done
+    }
   }
 }
 
