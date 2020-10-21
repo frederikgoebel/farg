@@ -150,6 +150,7 @@ export default {
   transition: opacity 0.2s ease;
   white-space: nowrap;
   overflow: hidden;
+  text-transform: uppercase;
 }
 
 .color-info.hidden {
