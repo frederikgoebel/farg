@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import { Blob, Point } from "./blob";
+import drawPathShape from "./blob";
 import { saveVideoToBuffer, drawBody, CollisionBody, getPose, drawKeypoints } from './mirror';
 import { drawEyeLine, Shapeshifter } from './skeleton'
 const frontColor = "#F7566A";
@@ -30,7 +30,12 @@ class Idle {
     drawCtx.fillStyle = backColor;
     drawCtx.fill();
 
+
+    drawCtx.save();
+    drawPathShape(drawCtx, this.shapeshifter.shape)
+    drawCtx.clip();
     drawCtx.drawImage(videoBuffer.canvas, 0, 0);
+    drawCtx.restore();
 
     collisionBody.debugDraw(drawCtx);
     drawKeypoints(pose.keypoints, 0.6, drawCtx);
@@ -65,10 +70,32 @@ class Idle {
 
     this.shapeshifter.tick(pose.keypoints, drawCtx)
 
+    drawCtx.save();
+    drawCtx.lineWidth = 10;
+    drawCtx.globalCompositeOperation = "screen";
 
+    drawCtx.translate(0, 0);
+    drawPathShape(drawCtx, this.shapeshifter.shape)
+    drawCtx.strokeStyle = "red";
+    drawCtx.stroke();
 
+    drawCtx.translate(5, 0);
+    drawPathShape(drawCtx, this.shapeshifter.shape)
+    drawCtx.strokeStyle = "blue";
+    drawCtx.stroke();
 
-    // console.log(pose)
+    drawCtx.translate(2, 4);
+    drawPathShape(drawCtx, this.shapeshifter.shape)
+    drawCtx.strokeStyle = "green";
+    drawCtx.stroke();
+
+    drawCtx.translate(-4, -2);
+    drawPathShape(drawCtx, this.shapeshifter.shape)
+    drawCtx.strokeStyle = "cyan";
+    drawCtx.stroke();
+
+    drawCtx.restore()
+
 
     if (allIn)
       return "idle"

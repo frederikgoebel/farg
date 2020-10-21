@@ -1,6 +1,5 @@
 import { Vector2 } from 'three';
-import { Blob } from './blob'
-
+import drawPathShape from './blob'
 
 
 function toPoseDict(keypoints) {
@@ -10,7 +9,6 @@ function toPoseDict(keypoints) {
   })
   return out
 }
-
 
 function debugLine(p0, p1, ctx) {
   if (!(p0 && p1))
@@ -25,27 +23,13 @@ function debugLine(p0, p1, ctx) {
   ctx.restore()
 }
 
-// function getLine(p0,p1){
-//   let le = p0.clone();
-//   let re = p1.clone();
-//
-//   let v = p0.clone().sub(re);
-//
-//   return {
-//
-//   }
-// }
-
-// offset some keypoints to have an outer shape of the body
-function drawEyeLine(poseDict, nose, ctx) {
+// scaleOutwards moves certain keypoints out of the body to describe an outer shape
+function scaleOutwards(poseDict, nose) {
 
   let outDict = {}
   for (const [key, value] of Object.entries(poseDict)) {
     outDict[key] = new Vector2(value.x, value.y);
   }
-
-
-  // TODO maybe just fill "bad" defaults in the beginning. like nose-100 bla bla
 
   if (poseDict["leftEye"] && poseDict["rightEye"]) {
     let v = poseDict["leftEye"].clone().sub(poseDict["rightEye"]);
@@ -53,9 +37,8 @@ function drawEyeLine(poseDict, nose, ctx) {
     let eyeDistance = v.length();
     let scaleVec = norm_v.clone().multiplyScalar(eyeDistance * 2);
 
-    // outDict["leftEye"].add(scaleVec);
-    // outDict["rightEye"].add(scaleVec.negate());
-
+    outDict["leftEye"].add(scaleVec);
+    outDict["rightEye"].add(scaleVec.negate());
 
     if (poseDict["nose"]) {
       let new_norm_v = new Vector2(norm_v.y, -norm_v.x).multiplyScalar(eyeDistance * 6)
@@ -126,104 +109,95 @@ function drawEyeLine(poseDict, nose, ctx) {
 
 }
 
+// fillApproximations tries to fill all skeleton points with sensible defaults based on some valid values
+function fillApproximations(poseDict) {
+
+  if (!(poseDict["leftEye"] && poseDict["rightEye"]))
+    return poseDict
+
+  let eyeDistance = poseDict["leftEye"].clone().sub(poseDict["rightEye"]).length();
+
+  poseDict["rightShoulder"] = poseDict["rightShoulder"] || new Vector2(2 * eyeDistance, 2 * eyeDistance).add(poseDict["leftEye"])
+  poseDict["leftShoulder"] = poseDict["leftShoulder"] || new Vector2(-2 * eyeDistance, 2 * eyeDistance).add(poseDict["rightEye"])
+
+  poseDict["rightElbow"] = poseDict["rightElbow"] || new Vector2(eyeDistance, 5 * eyeDistance).add(poseDict["rightShoulder"])
+  poseDict["leftElbow"] = poseDict["leftElbow"] || new Vector2(-eyeDistance, 5 * eyeDistance).add(poseDict["leftShoulder"])
+
+  poseDict["rightWrist"] = poseDict["rightWrist"] || new Vector2(eyeDistance, 5 * eyeDistance).add(poseDict["rightElbow"])
+  poseDict["leftWrist"] = poseDict["leftWrist"] || new Vector2(-eyeDistance, 5 * eyeDistance).add(poseDict["leftElbow"])
+
+  poseDict["rightAnkle"] = poseDict["rightAnkle"] || new Vector2(eyeDistance * 2, 22 * eyeDistance).add(poseDict["rightEye"])
+  poseDict["leftAnkle"] = poseDict["leftAnkle"] || new Vector2(-eyeDistance * 2, 22 * eyeDistance).add(poseDict["leftEye"])
+
+  return poseDict
+}
+
+// pointsOnCircle distributes n points around the center with radius distance
 function pointsOnCircle(n, center, radius) {
   let out = [];
   let thetaFrag = (2 * Math.PI) / n;
   for (let i = 0; i < n; i++) {
-    out.push({
-      x: center.x + radius * Math.cos(thetaFrag * i),
-      y: center.y + radius * Math.sin(thetaFrag * i)
-    });
+    out.push(new Vector2(
+      center.x + radius * Math.cos(thetaFrag * i),
+      center.y + radius * Math.sin(thetaFrag * i)
+    ));
   }
   return out;
-}
-
-
-function debugSkeleton(poseDict, ctx) {
-
-  // debugLine(poseDict["rightEye"], poseDict["leftEye"], ctx)
-  debugLine(poseDict["rightShoulder"], poseDict["leftShoulder"], ctx)
-
-  debugLine(poseDict["rightShoulder"], poseDict["rightElbow"], ctx)
-  debugLine(poseDict["rightElbow"], poseDict["rightWrist"], ctx)
-  //
-  // debugLine(poseDict["leftShoulder"], poseDict["leftElbow"], ctx)
-  // debugLine(poseDict["leftElbow"], poseDict["leftWrist"], ctx)
-
-
-
 }
 
 
 
 class Shapeshifter {
   constructor(position) {
-    this.speed = 0.1
-    this.damp = 0.8
-    this.blob = new Blob(pointsOnCircle(9, position, 40));
-    this.blob.points.forEach((point) => {
+    this.speed = 0.2
+    this.damp = 0.2
+
+    this.defaultPoints = pointsOnCircle(9, position, 100)
+    this.shape = pointsOnCircle(9, position, 100);
+    this.shape.forEach((point) => {
       point.v = new Vector2(0, 0);
     })
   }
-  tick(keypoints, ctx) {
-    let poseDict = drawEyeLine(toPoseDict(keypoints), ctx)
+  tick(keypoints) {
 
-    // TODO poseDict2points that fills missing poseDict values with approciamations
-    let newPoints = [
-      // poseDict["rightEye"] || new Vector2(10, 10),
-      poseDict["rightShoulder"] || new Vector2(10, 10),
-      poseDict["rightElbow"] || new Vector2(10, 10),
-      poseDict["rightWrist"] || new Vector2(10, 10),
-      poseDict["rightAnkle"] || new Vector2(10, 10),
-      poseDict["leftAnkle"] || new Vector2(10, 10),
-      poseDict["leftWrist"] || new Vector2(10, 10),
-      poseDict["leftElbow"] || new Vector2(10, 10),
-      poseDict["leftShoulder"] || new Vector2(10, 10),
-      // poseDict["leftEye"] || new Vector2(10, 10),
-      poseDict["nose"] || new Vector2(10, 10),
-    ]
-    debugSkeleton(poseDict, ctx)
-    console.log(poseDict)
-    if (newPoints.length != this.blob.points.length)
-      console.log("Length of points not equal", newPoints.length, this.blob.points.length)
+    let newPoints = [];
+    this.defaultPoints.forEach((p) => {
+      newPoints.push(new Vector2(p.x, p.y))
+    })
+
+    let poseDict = toPoseDict(keypoints)
+    if (poseDict["leftEye"] && poseDict["rightEye"]) {
+
+      poseDict = fillApproximations(poseDict)
+      poseDict = scaleOutwards(poseDict)
+
+      newPoints = [
+        poseDict["leftWrist"],
+        poseDict["leftAnkle"],
+        poseDict["rightAnkle"],
+        poseDict["rightWrist"],
+        poseDict["rightElbow"],
+        poseDict["rightShoulder"],
+        poseDict["nose"],
+        poseDict["leftShoulder"],
+        poseDict["leftElbow"],
+      ]
+    }
 
     for (let i = 0; i < newPoints.length; i++) {
-      let newPoint = new Vector2(this.blob.points[i].x, this.blob.points[i].y)
+      let newPoint = new Vector2(this.shape[i].x, this.shape[i].y)
       newPoints[i].sub(newPoint)
-      //newPoints[i].normalize()
-      this.blob.points[i].v.add(newPoints[i].multiplyScalar(this.speed))
+      this.shape[i].v.add(newPoints[i].multiplyScalar(this.speed))
 
     }
 
-    this.blob.points.forEach((point) => {
+    this.shape.forEach((point) => {
       point.x += point.v.x
       point.y += point.v.y
 
       point.v.multiplyScalar(this.damp)
     })
-
-
-
-
-    this.blob.render(ctx, "red", {
-      x: 0,
-      y: 0
-    }, "lighter")
-    this.blob.render(ctx, "blue", {
-      x: 5,
-      y: 0
-    }, "lighter")
-    this.blob.render(ctx, "green", {
-      x: 0,
-      y: 5
-    }, "lighter")
-    this.blob.render(ctx, "cyan", {
-      x: 2,
-      y: 5
-    }, "lighter")
-
-
   }
 }
 
-export { drawEyeLine, Shapeshifter }
+export { Shapeshifter }
