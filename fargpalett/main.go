@@ -69,34 +69,22 @@ func main() {
 
 	router := mux.NewRouter().StrictSlash(false)
 	router.Handle("/ws", rt.HandleWebsocket(hub))
-	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, CORS(Preflight()))).Methods("OPTIONS")
-	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, CORS(postSwatch(db, hub)))).Methods("POST")
-	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, CORS(getStream(db)))).Methods("GET")
+	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, postSwatch(db, hub))).Methods("POST")
+	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, getStream(db))).Methods("GET")
 	router.PathPrefix("/").Handler(fs)
+
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
+	originsOk := handlers.AllowedOrigins([]string{"http://farg.app", "http://www.farg.app", "http://dev.farg.app", "http://localhost:8080"}) // TOOD localhost should not be set. load from config
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
 	server := &http.Server{
 		Addr:    *port,
-		Handler: router,
+		Handler: handlers.CORS(originsOk, headersOk, methodsOk)(router),
 	}
 
 	log.Println("Listen and serve on " + *port)
 	log.Fatal(server.ListenAndServe())
 
-}
-
-func Preflight() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-}
-
-func CORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-		next.ServeHTTP(w, r)
-	})
 }
 
 // Swatch represents the json body of a new color swatch
