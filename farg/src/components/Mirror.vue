@@ -73,7 +73,9 @@ export default {
   display: flex;
   align-items: stretch;
   height: 100%;
-  width: 100%;
+  width: 25%;
+  flex-grow: 1;
+  flex-shrink: 0;
 }
 
 .canvas {

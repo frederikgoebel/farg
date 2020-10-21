@@ -149,7 +149,7 @@ function pointsOnCircle(n, center, radius) {
 
 class Shapeshifter {
   constructor(position) {
-    this.speed = 0.2
+    this.speed = 0.1
     this.damp = 0.2
 
     this.defaultPoints = pointsOnCircle(9, position, 100)
