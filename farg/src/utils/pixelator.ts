@@ -11,13 +11,6 @@ import {
 
 export type Swatch = string[];
 
-export interface BoundingBox {
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-}
-
 // options with defaults (not required)
 const options = {
   colors: 7, // desired palette size

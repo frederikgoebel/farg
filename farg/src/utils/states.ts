@@ -16,7 +16,8 @@ import {
   getUpperBodyBB,
   getLowerBodyBB,
   getThighsBB,
-  getFeetBB
+  getFeetBB,
+  BoundingBox
 } from "./getBoundingBoxes";
 
 import { Swatch } from "./pixelator";
@@ -26,7 +27,8 @@ import {
   Sequential,
   LineAnimation,
   PaletteAnimation,
-  Animation
+  Animation,
+  highlightPalette
 } from "./animation";
 
 const frontColor = "#F7566A";
@@ -168,7 +170,7 @@ class ColorSteal {
   colorCallback: (swatch: Swatch) => unknown;
   FIRST_TIME: boolean = true;
   pose: any;
-  boundingBoxes: any;
+  boundingBoxes?: BoundingBox[];
   swatch: Swatch = [];
   ANIMATION_FINISHED: boolean = false;
   lastUpdate?: number;
@@ -178,7 +180,6 @@ class ColorSteal {
   constructor(colorCallback) {
     this.colorCallback = colorCallback;
     this.pose = null;
-    this.boundingBoxes = null;
   }
 
   rndColor() {
@@ -261,15 +262,18 @@ class ColorSteal {
         );
       });
 
-      const paletteAnimations = this.boundingBoxes.map(
-        (bb, index) =>
-          new PaletteAnimation(
-            drawCtx,
-            palettes[index],
-            { x: bb.endX + 20, y: bb.startY - 20 },
-            32,
-            DURATION_MS
-          )
+      const paletteAnimations: Animation[] = this.boundingBoxes.map(
+        (bb, index) => {
+          const animation = new PaletteAnimation({
+            ctx: drawCtx,
+            swatch: swatches[index],
+            topLeft: { x: bb.endX + 20, y: bb.startY - 20 },
+            boxSize: 32,
+            duration: DURATION_MS
+          });
+
+          return highlightPalette(animation, 3000);
+        }
       );
 
       this.animation = new Sequential(

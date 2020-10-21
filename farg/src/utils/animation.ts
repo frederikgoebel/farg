@@ -1,12 +1,22 @@
+import { ColorSample } from "./pixelator";
+
 export interface Animation {
   update: (delta: number) => boolean;
   temporary: boolean;
 }
 type Point2D = { x: number; y: number };
 
-class PaletteAnimation implements Animation {
+type PaletteAnimationConfig = {
   ctx: CanvasRenderingContext2D;
-  palette: string[];
+  swatch: ColorSample;
+  topLeft: Point2D;
+  boxSize: number;
+  duration: number;
+};
+
+export class PaletteAnimation implements Animation {
+  ctx: CanvasRenderingContext2D;
+  swatch: ColorSample;
   topLeft: Point2D;
   current: Point2D;
   boxSize: number;
@@ -15,15 +25,15 @@ class PaletteAnimation implements Animation {
   temporary: boolean;
   currentColorIndex: number;
 
-  constructor(
-    ctx: CanvasRenderingContext2D,
-    palette: string[],
-    topLeft: Point2D,
-    boxSize: number,
-    duration: number
-  ) {
+  constructor({
+    ctx,
+    swatch,
+    topLeft,
+    boxSize,
+    duration
+  }: PaletteAnimationConfig) {
     this.ctx = ctx;
-    this.palette = palette;
+    this.swatch = swatch;
     this.topLeft = { ...topLeft };
     this.current = { ...topLeft };
     this.boxSize = boxSize;
@@ -45,15 +55,15 @@ class PaletteAnimation implements Animation {
         Math.abs(this.current.x - this.topLeft.x) / this.boxSize
       );
       const part = delta / this.duration;
-      this.current.x += this.palette.length * this.boxSize * part;
-      if (this.currentColorIndex >= this.palette.length) {
-        this.currentColorIndex = this.palette.length - 1;
+      this.current.x += this.swatch.palette.length * this.boxSize * part;
+      if (this.currentColorIndex >= this.swatch.palette.length) {
+        this.currentColorIndex = this.swatch.palette.length - 1;
         this.finished = true;
       }
     }
 
     for (let i = 0; i < this.currentColorIndex + 1; i++) {
-      this.ctx.fillStyle = this.palette[i];
+      this.ctx.fillStyle = this.swatch.palette[i];
       this.ctx.fillRect(
         this.topLeft.x + this.boxSize * i,
         this.topLeft.y,
@@ -66,7 +76,84 @@ class PaletteAnimation implements Animation {
   };
 }
 
-class LineAnimation implements Animation {
+function normalize(x: number, min: number, max: number) {
+  return (x - min) / (max - min);
+}
+
+function denormalize(x: number, min: number, max: number) {
+  return min + (max - min) * x;
+}
+
+const interpolate = (
+  f: (x: number) => number,
+  range: { from: number; to: number }
+) => (x: number) => {
+  const result = f(normalize(x, range.from, range.to));
+  return denormalize(result, range.from, range.to);
+};
+
+class HighlightPaletteAnimation implements Animation {
+  animation: PaletteAnimation;
+  ctx: CanvasRenderingContext2D;
+  LoopCount = 2;
+  duration: number;
+  bufferedTime = 0;
+  elapsedTime = 0;
+
+  currentIndex = 0;
+  finalIndex: number;
+
+  temporary = false;
+
+  DefaultChangeDeltaMs = 500;
+
+  easingFunction: (x: number) => number;
+
+  constructor(
+    animation: PaletteAnimation,
+    duration: number,
+    easingFunction?: (x: number) => number
+  ) {
+    this.animation = animation;
+    const prominentIndex = animation.swatch.palette.findIndex(
+      color => color === animation.swatch.prominentColor
+    );
+    this.finalIndex = this.LoopCount * 2 + prominentIndex;
+
+    this.easingFunction = easingFunction ?? (() => this.DefaultChangeDeltaMs);
+    this.ctx = animation.ctx;
+    this.duration = duration;
+  }
+
+  update = (deltaTime: number) => {
+    if (!deltaTime || deltaTime === 0) return false;
+
+    if (!this.animation.update(deltaTime)) return false;
+
+    this.bufferedTime += deltaTime;
+    this.elapsedTime = Math.min(this.elapsedTime + deltaTime, this.duration);
+
+    const t = this.elapsedTime / this.duration;
+    this.currentIndex = Math.round(this.easingFunction(t) * this.finalIndex);
+    const highlightIndex =
+      this.currentIndex % this.animation.swatch.palette.length;
+
+    const x = highlightIndex * this.animation.boxSize;
+    const topLeft = this.animation.topLeft;
+
+    this.ctx.strokeStyle = "green";
+    this.ctx.strokeRect(
+      topLeft.x + x,
+      topLeft.y,
+      this.animation.boxSize,
+      this.animation.boxSize
+    );
+
+    return this.elapsedTime >= this.duration;
+  };
+}
+
+export class LineAnimation implements Animation {
   ctx: CanvasRenderingContext2D;
   from: Point2D;
   to: Point2D;
@@ -119,7 +206,7 @@ class LineAnimation implements Animation {
     return this.finished;
   };
 }
-class Parallel implements Animation {
+export class Parallel implements Animation {
   temporary = false;
   animations: Animation[];
   constructor(...animations: Animation[]) {
@@ -146,7 +233,7 @@ class Parallel implements Animation {
   };
 }
 
-class Sequential implements Animation {
+export class Sequential implements Animation {
   temporary = false;
   animations: Animation[];
 
@@ -178,4 +265,12 @@ class Sequential implements Animation {
   };
 }
 
-export { Parallel, Sequential, LineAnimation, PaletteAnimation };
+export const easing = {
+  easeOutCubic: (t: number) => --t * t * t + 1
+};
+
+export const highlightPalette = (
+  animation: PaletteAnimation,
+  duration: number,
+  easingFunction?: (x: number) => number
+) => new HighlightPaletteAnimation(animation, duration, easingFunction);
