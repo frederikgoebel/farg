@@ -1,7 +1,8 @@
 <template>
 <transition-group name="stream" tag="div" id="color-stream" class="row">
+  <Mirror key="mirror" @swatchAdded="addSwatch" />
   <div key="loadingMsg" v-if="isLoading">Loading ...</div>
-  <div v-else v-for="(swatch, swatchIndex) in swatches" :key="`swatch-${swatchIndex}`" @click="selectSwatch(swatchIndex)" class="color-column" :class="{squash: preview, large: selectedSwatch==swatchIndex}">
+  <div v-else v-for="(swatch, swatchIndex) in swatchesToShow" :key="`swatch-${swatchIndex}`" @click="selectSwatch(swatchIndex)" class="color-column" :class="{squash: preview, large: selectedSwatch==swatchIndex}">
     <div v-for=" (color, colorIndex) in swatch" :key="`color-${colorIndex}`" class="color-field" :style="{background:  color}">
       <div :class="{hidden: selectedSwatch!=swatchIndex}" class="color-info" :style="{color: invertColor(rgbaToHex(color),true)}">
         {{rgbaToHex(color)}}
@@ -9,12 +10,15 @@
     </div>
     <div v-if="!preview" class="swatch-info">Yesterday</div>
   </div>
+  <div key="imageLoader" id="image-loader" style="display: none;"> </div>
 </transition-group>
 </template>
 
 <script>
 import axios from 'axios';
+import Mirror from './Mirror'
 import { rgbaToHex, invertColor } from '../utils/invertColor';
+
 
 export default {
   data: () => ({
@@ -22,13 +26,20 @@ export default {
     swatches: [],
     selectedSwatch: null,
   }),
-  components: {},
+  components: {
+    Mirror
+  },
   props: {
     streamID: {
       type: String,
       required: true,
     },
     preview: Boolean,
+  },
+  computed: {
+    swatchesToShow() {
+      return this.swatches.reverse()
+    }
   },
   methods: {
     rgbaToHex,
