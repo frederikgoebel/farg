@@ -106,7 +106,6 @@ async function setupCamera(video) {
     );
   }
 
-  console.log(navigator.mediaDevices.getSupportedConstraints());
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: false,
     video: true,

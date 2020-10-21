@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 
 	"github.com/frederikgoebel/farg/fargpalett/rt"
 
@@ -92,6 +93,63 @@ type Swatch struct {
 	Colors []string `json:"colors"`
 }
 
+func isHex(s string) bool {
+	isHex, _ := regexp.MatchString("^#(?:[0-9a-fA-F]{3}){1,2}$", s)
+	return isHex
+}
+
+// /*
+// function rgbaToHex(rgb) {
+//   if (rgb.indexOf('rgb') == -1) // there might be hex colors already
+//     return rgb
+//
+//   rgb = rgb.substr(5).split(")")[0].split(',');
+//
+//   let r = (+rgb[0]).toString(16),
+//     g = (+rgb[1]).toString(16),
+//     b = (+rgb[2]).toString(16);
+//
+//   if (r.length == 1)
+//     r = "0" + r;
+// //   if (g.length == 1)
+// //     g = "0" + g;
+// //   if (b.length == 1)
+// //     b = "0" + b;
+// //
+// //   return "#" + r + g + b;
+// // }
+// // */
+// //
+// func rgbaToHex(rgb string) (string, error) {
+// 	if len(rgb) < 5 {
+// 		return "", errors.New("Not a rgb[a] string")
+// 	}
+//
+// 	var parts []string
+// 	if rgb[0:3] == "rgb" {
+// 		parts = strings.split(rgb[4:], ",")
+// 	} else if rgb[0:4] == "rgba" {
+// 		parts = strings.split(rgb[5:], ",")
+// 	} else {
+// 		return "", errors.New("Not a rgb[a] string")
+// 	}
+//
+// 		r := parts[0]
+//
+// }
+
+func (s *Swatch) Validate() string {
+	if len(s.Colors) != 6 {
+		return "Wrong swatch length"
+	}
+	for _, color := range s.Colors {
+		if !isHex(color) {
+			return "Not hex"
+		}
+	}
+	return ""
+}
+
 func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		streamID := mux.Vars(r)["stream"]
@@ -100,6 +158,12 @@ func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
 		if err := decoder.Decode(&swatch); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprint(w, "Invalid json") // todo proper error handling
+			return
+		}
+
+		if validation := swatch.Validate(); validation != "" {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprint(w, validation)
 			return
 		}
 

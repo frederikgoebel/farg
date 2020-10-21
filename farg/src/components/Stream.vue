@@ -19,7 +19,6 @@ import axios from 'axios';
 import Mirror from './Mirror'
 import { rgbaToHex, invertColor } from '../utils/invertColor';
 
-
 export default {
   data: () => ({
     isLoading: true,
@@ -51,6 +50,10 @@ export default {
         this.selectedSwatch = index;
     },
     addSwatch(swatch) {
+      swatch.forEach((color, index) => {
+        swatch[index] = this.rgbaToHex(color)
+      })
+
       this.swatches.push(swatch);
 
       axios.post(process.env.VUE_APP_API_SERVER + '/' + this.streamID + '/swatches', {
