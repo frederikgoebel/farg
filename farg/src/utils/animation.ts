@@ -113,18 +113,24 @@ abstract class BaseAnimation implements Animation {
   };
 
   stroke = () => {
+    if (this.animationState.type === AnimationType.Gone) return;
+
     const resetContext = this.updateContext();
     this.ctx.stroke();
     resetContext();
   };
 
   fillRect = (x: number, y: number, w: number, h: number): void => {
+    if (this.animationState.type === AnimationType.Gone) return;
+
     const resetContext = this.updateContext();
     this.ctx.fillRect(x, y, w, h);
     resetContext();
   };
 
   strokeRect = (x: number, y: number, w: number, h: number): void => {
+    if (this.animationState.type === AnimationType.Gone) return;
+
     const resetContext = this.updateContext();
     this.ctx.strokeRect(x, y, w, h);
     resetContext();
@@ -293,7 +299,7 @@ class HighlightPaletteAnimation extends BaseAnimation {
   updateAnimation = (deltaTime: number) => {
     if (!deltaTime || deltaTime === 0) return false;
 
-    if (!this.animation.update(deltaTime)) return false;
+    if (!this.animation.updateAnimation(deltaTime)) return false;
 
     this.elapsedTime = Math.min(
       this.elapsedTime + deltaTime,
@@ -335,6 +341,9 @@ class HighlightPaletteAnimation extends BaseAnimation {
   };
 
   draw = () => {
+    this.animation.draw();
+    if (!this.animation.isFinished()) return;
+
     if (this.state.state === HighlightPatternState.Focus) {
       const oldFillStyle = this.ctx.fillStyle;
       this.ctx.fillStyle = this.animation.swatch.prominentColor;
@@ -354,17 +363,15 @@ class HighlightPaletteAnimation extends BaseAnimation {
       this.ctx.globalAlpha = this.boxOpacity;
     }
 
-    if (this.state.state !== HighlightPatternState.Cycling) {
-      this.ctx.save();
-      this.ctx.lineWidth = 5;
-      this.strokeRect(
-        this.animation.topLeft.x + this.xOffset,
-        this.animation.topLeft.y,
-        this.animation.boxSize,
-        this.animation.boxSize
-      );
-      this.ctx.restore();
-    }
+    this.ctx.save();
+    this.ctx.lineWidth = 5;
+    this.strokeRect(
+      this.animation.topLeft.x + this.xOffset,
+      this.animation.topLeft.y,
+      this.animation.boxSize,
+      this.animation.boxSize
+    );
+    this.ctx.restore();
 
     this.ctx.globalAlpha = oldOpacity;
     this.ctx.lineWidth = oldWidth;
