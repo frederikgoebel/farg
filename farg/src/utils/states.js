@@ -1,62 +1,86 @@
-/* eslint-disable */
-
 import gsap from "gsap";
-import {
-  saveVideoToBuffer,
-  drawBody,
-  CollisionBody,
-  getPose,
-  drawKeypoints,
-} from "./mirror";
+import { saveVideoToBuffer, CollisionBody, getPose, drawKeypoints, usedKeyPointParts } from "./mirror";
 
-import generateSwatches from "./pixelator";
-import {
-  getHairBB,
-  getFaceBB,
-  getUpperBodyBB,
-  getLowerBodyBB,
-  getThighsBB,
-  getFeetBB,
-} from "./getBoundingBoxes";
+import { Shapeshifter, toPoseDict } from './skeleton'
+import drawPathShape from './blob'
+import pixelator, { generateSwatches } from "./pixelator";
 
-import {
-  Parallel,
-  Sequential,
-  LineAnimation,
-  PaletteAnimation,
-} from "./animation";
+import { getHairBB, getFaceBB, getUpperBodyBB, getLowerBodyBB, getThighsBB, getFeetBB, } from "./getBoundingBoxes";
 
-const frontColor = "#F7566A";
-const backColor = "#023F92";
+import { Parallel, Sequential, LineAnimation, PaletteAnimation, } from "./animation";
 
 class Idle {
-  constructor() {}
-  async tick(drawCtx, video, videoBuffer, posenet) {
-    let collisionBody = new CollisionBody(
-      {
-        x: 20,
-        y: 0,
-      },
-      drawCtx.canvas.height / 280
-    );
-
+  constructor(setTextCallback) {
+    this.shapeshifter = new Shapeshifter({
+      x: 200,
+      y: 400
+    });
+    this.setTextCallback = setTextCallback;
+    this.perfectTime = 0;
+  }
+  async tick(drawCtx, video, videoBuffer, posenet, dt) {
     saveVideoToBuffer(video, videoBuffer);
     let pose = await getPose(posenet, videoBuffer.canvas);
-    let allIn = collisionBody.colliding(pose);
+    let poseDict = toPoseDict(pose.keypoints)
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
-    drawCtx.rect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
-    drawCtx.fillStyle = backColor;
-    drawCtx.fill();
+    this.shapeshifter.tick(poseDict)
 
+    drawCtx.save();
+    drawPathShape(drawCtx, this.shapeshifter.shape)
+    drawCtx.clip();
     drawCtx.drawImage(videoBuffer.canvas, 0, 0);
+    drawCtx.restore();
 
-    collisionBody.debugDraw(drawCtx);
+    // collisionBody.debugDraw(drawCtx);
     drawKeypoints(pose.keypoints, 0.6, drawCtx);
 
-    if (allIn) return "found";
-    return "idle";
+    drawCtx.save();
+    drawCtx.lineWidth = 15;
+    drawCtx.globalCompositeOperation = "screen";
+
+    drawCtx.translate(0, 0);
+    drawPathShape(drawCtx, this.shapeshifter.shape)
+    drawCtx.strokeStyle = "#FF0000";
+    drawCtx.stroke();
+
+    drawCtx.translate(7, 0);
+    drawPathShape(drawCtx, this.shapeshifter.shape)
+    drawCtx.strokeStyle = "#1EFF33";
+    drawCtx.stroke();
+
+    drawCtx.translate(-9, 4);
+    drawPathShape(drawCtx, this.shapeshifter.shape)
+    drawCtx.strokeStyle = "#E864FF";
+    drawCtx.stroke();
+
+    drawCtx.restore()
+
+    console.log(pose)
+    console.log(poseDict)
+
+    let allIn = true;
+    usedKeyPointParts.forEach(part => {
+      if (poseDict[part] == undefined)
+        allIn = false;
+    })
+
+    if ((poseDict["leftEye"] == undefined) || (poseDict["leftAnkle"] == undefined)) {
+      this.setTextCallback("Go further away!")
+    } else if (allIn) {
+      this.perfectTime += dt;
+      this.setTextCallback("Perfect stay like this.")
+    } else {
+      this.setTextCallback("Searching for some bones..")
+    }
+
+    if (this.perfectTime > 3000) {
+      this.perfectTime = 0;
+      return "flash"
+    }
+
+    return "idle"
   }
 }
 
@@ -92,11 +116,6 @@ class Found {
     let allIn = collisionBody.colliding(pose);
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
-
-    drawCtx.rect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
-    drawCtx.fillStyle = backColor;
-    drawCtx.fill();
-
     drawCtx.drawImage(videoBuffer.canvas, 0, 0);
 
     collisionBody.debugDraw(drawCtx);
@@ -186,7 +205,7 @@ class ColorSteal {
     if (this.FIRST_TIME) {
       this.pose = await getPose(posenet, videoBuffer.canvas);
 
-      const { keypoints } = this.pose;
+      const {keypoints} = this.pose;
       this.boundingBoxes = [
         getHairBB(keypoints),
         getFaceBB(keypoints),
@@ -210,26 +229,50 @@ class ColorSteal {
       const lineAnimations = this.boundingBoxes.map((bb) => {
         const topHorizontal = new LineAnimation(
           drawCtx,
-          { x: bb.startX, y: bb.startY },
-          { x: bb.endX, y: bb.startY },
+          {
+            x: bb.startX,
+            y: bb.startY
+          },
+          {
+            x: bb.endX,
+            y: bb.startY
+          },
           DURATION_MS
         );
         const bottomHorizontal = new LineAnimation(
           drawCtx,
-          { x: bb.endX, y: bb.endY },
-          { x: bb.startX, y: bb.endY },
+          {
+            x: bb.endX,
+            y: bb.endY
+          },
+          {
+            x: bb.startX,
+            y: bb.endY
+          },
           DURATION_MS
         );
         const leftVertical = new LineAnimation(
           drawCtx,
-          { x: bb.startX, y: bb.startY },
-          { x: bb.startX, y: bb.endY },
+          {
+            x: bb.startX,
+            y: bb.startY
+          },
+          {
+            x: bb.startX,
+            y: bb.endY
+          },
           DURATION_MS
         );
         const rightVertical = new LineAnimation(
           drawCtx,
-          { x: bb.endX, y: bb.endY },
-          { x: bb.endX, y: bb.startY },
+          {
+            x: bb.endX,
+            y: bb.endY
+          },
+          {
+            x: bb.endX,
+            y: bb.startY
+          },
           DURATION_MS
         );
         return new Parallel(
@@ -241,14 +284,16 @@ class ColorSteal {
       });
 
       const paletteAnimations = this.boundingBoxes.map(
-        (bb, index) =>
-          new PaletteAnimation(
-            drawCtx,
-            palettes[index],
-            { x: bb.endX + 20, y: bb.startY - 20 },
-            32,
-            DURATION_MS
-          )
+        (bb, index) => new PaletteAnimation(
+          drawCtx,
+          palettes[index],
+          {
+            x: bb.endX + 20,
+            y: bb.startY - 20
+          },
+          32,
+          DURATION_MS
+        )
       );
 
       this.animation = new Sequential(
@@ -260,7 +305,8 @@ class ColorSteal {
 
     if (this.animation) {
       this.ANIMATION_FINISHED = this.animation.update(this.deltaTime);
-      if (this.ANIMATION_FINISHED) delete this.animation;
+      if (this.ANIMATION_FINISHED)
+        delete this.animation;
     }
 
     // drawKeypoints(pose.keypoints, 0.6, drawCtx);

@@ -17,7 +17,10 @@
     "gsap": "^3.5.1",
     "rgbquant": "^1.1.2",
     "sat": "^0.8.0",
-    "vue": "^2.6.10"
+    "simplex-noise": "^2.4.0",
+    "three": "^0.121.1",
+    "vue": "^2.6.10",
+    "vue-router": "^3.4.7"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.0.3",
