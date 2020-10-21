@@ -1,9 +1,125 @@
 import { ColorSample } from "./pixelator";
 
-export interface Animation {
-  update: (delta: number) => boolean;
-  temporary: boolean;
+type EasingFunction = (t: number) => number;
+
+export const easing = {
+  easeOutCubic: (t: number) => --t * t * t + 1
+};
+
+export enum AnimationType {
+  Active,
+  FadeOut,
+  Gone
 }
+
+// eslint-disable-next-line @typescript-eslint/no-namespace
+namespace Anim {
+  export type Active = {
+    type: AnimationType.Active;
+  };
+
+  export type FadeOut = {
+    type: AnimationType.FadeOut;
+    duration: number;
+    opacity: number;
+    easingFunction: EasingFunction;
+  };
+
+  export type Gone = {
+    type: AnimationType.Gone;
+  };
+}
+
+type AnimationState = Anim.Active | Anim.FadeOut | Anim.Gone;
+
+export interface Animation {
+  opacity: number;
+  animationState: AnimationState;
+  update: (deltaTime: number) => boolean;
+  draw: () => void;
+
+  isFinished: () => boolean;
+  temporary: boolean;
+
+  fadeOut: (duration: number, f?: EasingFunction) => void;
+  getContext(): CanvasRenderingContext2D;
+}
+
+abstract class BaseAnimation implements Animation {
+  readonly ctx: CanvasRenderingContext2D;
+  temporary = false;
+  animationState: AnimationState = { type: AnimationType.Active };
+  opacity = 1;
+
+  protected abstract updateAnimation: (deltaTime: number) => boolean;
+  abstract draw: () => void;
+  abstract isFinished: () => boolean;
+
+  constructor(ctx: CanvasRenderingContext2D) {
+    this.ctx = ctx;
+  }
+
+  update = (deltaTime: number) => {
+    switch (this.animationState.type) {
+      case AnimationType.Active:
+        break;
+      case AnimationType.FadeOut:
+        this.opacity = Math.max(this.opacity - deltaTime / 6 / 50, 0);
+        if (this.opacity === 0)
+          this.animationState = { type: AnimationType.Gone };
+        break;
+      case AnimationType.Gone:
+        return true;
+    }
+
+    const finished = this.updateAnimation(deltaTime);
+    this.draw();
+    return finished;
+  };
+
+  fadeOut = (duration: number, f: EasingFunction = (x: number) => x) => {
+    this.animationState = {
+      type: AnimationType.FadeOut,
+      duration,
+      opacity: 1,
+      easingFunction: f
+    };
+  };
+
+  getContext = () => this.ctx;
+
+  updateContext = () => {
+    const oldOpacity = this.ctx.globalAlpha;
+
+    switch (this.animationState.type) {
+      case AnimationType.FadeOut:
+        this.ctx.globalAlpha *= this.animationState.opacity;
+    }
+
+    return () => {
+      this.ctx.globalAlpha = oldOpacity;
+    };
+  };
+
+  stroke = () => {
+    const resetContext = this.updateContext();
+    this.ctx.stroke();
+    resetContext();
+  };
+
+  fillRect = (x: number, y: number, w: number, h: number): void => {
+    const resetContext = this.updateContext();
+    this.ctx.fillRect(x, y, w, h);
+    resetContext();
+  };
+
+  strokeRect = (x: number, y: number, w: number, h: number): void => {
+    const resetContext = this.updateContext();
+    this.ctx.fillRect(x, y, w, h);
+    resetContext();
+  };
+}
+
 type Point2D = { x: number; y: number };
 
 type PaletteAnimationConfig = {
@@ -14,8 +130,7 @@ type PaletteAnimationConfig = {
   duration: number;
 };
 
-export class PaletteAnimation implements Animation {
-  ctx: CanvasRenderingContext2D;
+export class PaletteAnimation extends BaseAnimation {
   swatch: ColorSample;
   topLeft: Point2D;
   current: Point2D;
@@ -32,7 +147,8 @@ export class PaletteAnimation implements Animation {
     boxSize,
     duration
   }: PaletteAnimationConfig) {
-    this.ctx = ctx;
+    super(ctx);
+
     this.swatch = swatch;
     this.topLeft = { ...topLeft };
     this.current = { ...topLeft };
@@ -47,14 +163,14 @@ export class PaletteAnimation implements Animation {
 
   setTemporary = (value: boolean) => (this.temporary = value);
 
-  update = (delta: number) => {
-    if (!delta || delta === 0) return false;
+  updateAnimation = (deltaTime: number) => {
+    if (!deltaTime || deltaTime === 0) return false;
 
     if (!this.finished) {
       this.currentColorIndex = Math.floor(
         Math.abs(this.current.x - this.topLeft.x) / this.boxSize
       );
-      const part = delta / this.duration;
+      const part = deltaTime / this.duration;
       this.current.x += this.swatch.palette.length * this.boxSize * part;
       if (this.currentColorIndex >= this.swatch.palette.length) {
         this.currentColorIndex = this.swatch.palette.length - 1;
@@ -62,17 +178,21 @@ export class PaletteAnimation implements Animation {
       }
     }
 
+    return this.isFinished();
+  };
+
+  isFinished = () => this.finished;
+
+  draw = () => {
     for (let i = 0; i < this.currentColorIndex + 1; i++) {
       this.ctx.fillStyle = this.swatch.palette[i];
-      this.ctx.fillRect(
+      this.fillRect(
         this.topLeft.x + this.boxSize * i,
         this.topLeft.y,
         this.boxSize,
         this.boxSize
       );
     }
-
-    return this.finished;
   };
 }
 
@@ -95,18 +215,27 @@ const interpolate = (
 type HighlightPaletteAnimationConfig = {
   animation: PaletteAnimation;
   duration: number;
-  blinkPercentage: number;
   easingFunction?: (x: number) => number;
 };
 
-class HighlightPaletteAnimation implements Animation {
-  animation: PaletteAnimation;
-  ctx: CanvasRenderingContext2D;
+enum HighlightPatternState {
+  Cycling,
+  Blinking,
+  Focus
+}
+
+class HighlightPaletteAnimation extends BaseAnimation {
+  readonly animation: PaletteAnimation;
   LoopCount = 2;
 
-  cycleDuration: number;
-  totalDuration: number;
-  finalIndex: number;
+  xOffset = 0;
+
+  state: { state: HighlightPatternState; elapsedTime: number } = {
+    state: HighlightPatternState.Cycling,
+    elapsedTime: 0
+  };
+
+  readonly finalIndex: number;
 
   elapsedTime = 0;
   currentIndex = 0;
@@ -115,19 +244,31 @@ class HighlightPaletteAnimation implements Animation {
 
   temporary = false;
 
-  DefaultChangeDeltaMs = 500;
+  cycleDurationMs: number;
+  totalDurationMs: number;
+
+  readonly FadeOutInDurationMs = 250;
+  readonly BlinkAmount = 3;
+
+  readonly BlinkDurationMs = this.FadeOutInDurationMs * this.BlinkAmount;
+  readonly FocusDurationMs = 1000;
 
   easingFunction: (x: number) => number;
 
   constructor({
     animation,
     duration,
-    blinkPercentage = 20,
     easingFunction
   }: HighlightPaletteAnimationConfig) {
+    super(animation.ctx);
+
+    this.cycleDurationMs =
+      duration - this.BlinkDurationMs - this.FadeOutInDurationMs;
+
+    this.totalDurationMs =
+      this.cycleDurationMs + this.BlinkDurationMs + this.FocusDurationMs;
+
     this.animation = animation;
-    this.totalDuration = duration;
-    this.cycleDuration = duration * (1 - blinkPercentage / 100);
 
     const prominentIndex = animation.swatch.palette.findIndex(
       color => color === animation.swatch.prominentColor
@@ -136,67 +277,80 @@ class HighlightPaletteAnimation implements Animation {
       this.LoopCount * animation.swatch.palette.length + prominentIndex;
 
     this.easingFunction = easingFunction ?? ((t: number) => t);
-    this.ctx = animation.ctx;
   }
 
-  draw = (x: number) => {
-    if (this.animation.temporary) {
-      this.ctx.fillStyle = this.animation.swatch.prominentColor;
-      this.ctx.fillRect(
-        this.animation.topLeft.x + x,
-        this.animation.topLeft.y,
-        this.animation.boxSize,
-        this.animation.boxSize
-      )
-    }
-    const oldWidth = this.ctx.lineWidth;
-    this.ctx.lineWidth = 5;
-    this.ctx.strokeRect(
-      this.animation.topLeft.x + x,
-      this.animation.topLeft.y,
-      this.animation.boxSize,
-      this.animation.boxSize
-    );
-    this.ctx.lineWidth = oldWidth;
-  };
-
-  update = (deltaTime: number) => {
+  updateAnimation = (deltaTime: number) => {
     if (!deltaTime || deltaTime === 0) return false;
 
     if (!this.animation.update(deltaTime)) return false;
 
     this.elapsedTime = Math.min(
       this.elapsedTime + deltaTime,
-      this.totalDuration
+      this.totalDurationMs
     );
 
-    const t = Math.min(this.elapsedTime / this.cycleDuration, 1);
+    const t = Math.min(this.elapsedTime / this.cycleDurationMs, 1);
     this.currentIndex = Math.round(this.easingFunction(t) * this.finalIndex);
     const highlightIndex =
       this.currentIndex % this.animation.swatch.palette.length;
 
-    const x = highlightIndex * this.animation.boxSize;
+    this.xOffset = highlightIndex * this.animation.boxSize;
 
-    // Blink
-    if (
-      this.cycleDuration <= this.elapsedTime &&
-      this.elapsedTime <= this.totalDuration
-    ) {
-      const oldOpacity = this.ctx.globalAlpha;
+    switch (this.state.state) {
+      case HighlightPatternState.Cycling:
+        if (this.state.elapsedTime >= this.cycleDurationMs)
+          this.state = {
+            state: HighlightPatternState.Blinking,
+            elapsedTime: 0
+          };
+        break;
 
-      this.updateOpacity(deltaTime);
+      case HighlightPatternState.Blinking: {
+        this.updateOpacity(deltaTime);
+        if (this.state.elapsedTime >= this.BlinkDurationMs) {
+          this.state = {
+            state: HighlightPatternState.Focus,
+            elapsedTime: 0
+          };
+          this.animation.fadeOut(1000, easing.easeOutCubic);
+        }
+        break;
+      }
+    }
 
+    return this.isFinished();
+  };
+
+  draw = () => {
+    if (this.state.state === HighlightPatternState.Focus) {
+      const oldFillStyle = this.ctx.fillStyle;
+      this.ctx.fillStyle = this.animation.swatch.prominentColor;
+      this.fillRect(
+        this.animation.topLeft.x + this.xOffset,
+        this.animation.topLeft.y,
+        this.animation.boxSize,
+        this.animation.boxSize
+      );
+      this.ctx.fillStyle = oldFillStyle;
+    }
+
+    const oldOpacity = this.ctx.globalAlpha;
+    const oldWidth = this.ctx.lineWidth;
+
+    if (this.state.state === HighlightPatternState.Blinking) {
       this.ctx.globalAlpha = this.boxOpacity;
-      this.draw(x);
-      this.ctx.globalAlpha = oldOpacity;
-    } else {
-      this.draw(x);
     }
 
-    if (this.elapsedTime >= this.totalDuration) {
-      this.animation.temporary = true;
-    }
-    return this.elapsedTime >= this.totalDuration;
+    this.ctx.lineWidth = 5;
+    this.strokeRect(
+      this.animation.topLeft.x + this.xOffset,
+      this.animation.topLeft.y,
+      this.animation.boxSize,
+      this.animation.boxSize
+    );
+
+    this.ctx.globalAlpha = oldOpacity;
+    this.ctx.lineWidth = oldWidth;
   };
 
   updateOpacity = (deltaTime: number) => {
@@ -217,10 +371,16 @@ class HighlightPaletteAnimation implements Animation {
       }
     }
   };
+
+  isFinished = (): boolean => {
+    return (
+      this.state.state === HighlightPatternState.Focus &&
+      this.state.elapsedTime >= this.FocusDurationMs
+    );
+  };
 }
 
-export class LineAnimation implements Animation {
-  ctx: CanvasRenderingContext2D;
+export class LineAnimation extends BaseAnimation {
   from: Point2D;
   to: Point2D;
   current: Point2D;
@@ -235,7 +395,8 @@ export class LineAnimation implements Animation {
     to: Point2D,
     duration: number
   ) {
-    this.ctx = ctx;
+    super(ctx);
+
     this.from = { ...from };
     this.to = { ...to };
     this.current = { ...from };
@@ -249,8 +410,9 @@ export class LineAnimation implements Animation {
     this.temporary = value;
   };
 
-  update = (delta: number) => {
+  updateAnimation = (delta: number) => {
     if (!delta || delta === 0) return false;
+
     if (!this.finished) {
       const part = delta / this.duration;
       this.current.x += (this.to.x - this.from.x) * part;
@@ -264,22 +426,30 @@ export class LineAnimation implements Animation {
       }
     }
 
+    return this.isFinished();
+  };
+
+  draw = () => {
     this.ctx.beginPath();
     this.ctx.moveTo(this.from.x, this.from.y);
     this.ctx.lineTo(this.current.x, this.current.y);
-    this.ctx.stroke();
-
-    return this.finished;
+    this.stroke();
   };
+
+  isFinished = () => this.finished;
 }
-export class Parallel implements Animation {
+
+export class Parallel extends BaseAnimation {
   temporary = false;
   animations: Animation[];
+  finished = false;
   constructor(...animations: Animation[]) {
+    super(animations[0].getContext());
+
     this.animations = animations;
   }
 
-  update = (delta: number) => {
+  updateAnimation = (delta: number) => {
     if (this.animations.length === 0) return true;
 
     let allFinished = true;
@@ -295,15 +465,26 @@ export class Parallel implements Animation {
       }
     }
 
-    return allFinished;
+    this.finished = allFinished;
+
+    return this.isFinished();
   };
+
+  draw = () => {
+    this.animations.forEach(a => a.draw());
+  };
+
+  isFinished = () => this.finished;
 }
 
-export class Sequential implements Animation {
+export class Sequential extends BaseAnimation {
   temporary = false;
   animations: Animation[];
+  finished = false;
 
   constructor(...animations: Animation[]) {
+    super(animations[0].getContext());
+
     this.animations = animations;
   }
 
@@ -311,7 +492,7 @@ export class Sequential implements Animation {
     this.animations.push(animation);
   };
 
-  update = (delta: number) => {
+  updateAnimation = (delta: number) => {
     if (this.animations.length === 0) return true;
 
     let i = 0;
@@ -323,17 +504,28 @@ export class Sequential implements Animation {
           ++i;
         }
       } else {
-        return false;
+        this.finished = false;
+        return this.isFinished();
       }
     }
 
-    return true;
+    this.finished = true;
+    return this.isFinished();
   };
-}
 
-export const easing = {
-  easeOutCubic: (t: number) => --t * t * t + 1
-};
+  draw = () => {
+    if (this.animations.length === 0) return;
+    this.animations[0].draw();
+
+    let i = 1;
+    while (i < this.animations.length && this.animations[i].isFinished()) {
+      this.animations[i].draw();
+      ++i;
+    }
+  };
+
+  isFinished = () => this.finished;
+}
 
 export const highlightPalette = (config: HighlightPaletteAnimationConfig) =>
   new HighlightPaletteAnimation(config);

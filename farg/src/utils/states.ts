@@ -281,7 +281,6 @@ class ColorSteal {
           return highlightPalette({
             animation,
             duration: 5000,
-            blinkPercentage: 100 / 3,
             easingFunction: easing.easeOutCubic
           });
         }
@@ -295,8 +294,9 @@ class ColorSteal {
     }
 
     if (this.animation) {
-      this.ANIMATION_FINISHED = this.animation.update(this.deltaTime);
-      if (this.ANIMATION_FINISHED) delete this.animation;
+      this.animation.update(this.deltaTime);
+      this.animation.draw();
+      if (this.animation.isFinished()) delete this.animation;
     }
 
     // drawKeypoints(pose.keypoints, 0.6, drawCtx);
