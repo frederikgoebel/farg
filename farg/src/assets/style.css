@@ -46,7 +46,6 @@ h2 {
   flex-wrap: wrap;
   flex-direction: row;
   align-items:  center;
-  justify-content: space-between;
 }
 
 .item-100{
@@ -94,7 +93,7 @@ h2 {
 }
 
 .pb-64{
-  padding-right: 64px;
+  padding-bottom: 64px;
 }
 
 .pl-32{
@@ -110,5 +109,21 @@ h2 {
 }
 
 .pb-32{
-  padding-right: 32px;
+  padding-bottom: 32px;
+}
+
+.pl-16{
+  padding-left: 16px;
+}
+
+.pt-16{
+  padding-top: 16px;
+}
+
+.pr-16{
+  padding-right: 16px;
+}
+
+.pb-16{
+  padding-bottom: 16px;
 }

@@ -35,6 +35,7 @@ export default {
   width: 100%;
   overflow: hidden;
   min-width: min-content;
+  justify-content: space-between;
 }
 
 .page-title {
