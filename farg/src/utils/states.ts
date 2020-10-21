@@ -281,7 +281,7 @@ class ColorSteal {
           return highlightPalette({
             animation,
             duration: 5000,
-            blinkPercentage: 20,
+            blinkPercentage: 100 / 3,
             easingFunction: easing.easeOutCubic
           });
         }

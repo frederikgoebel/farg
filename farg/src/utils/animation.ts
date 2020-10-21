@@ -140,12 +140,15 @@ class HighlightPaletteAnimation implements Animation {
   }
 
   draw = (x: number) => {
+    const oldWidth = this.ctx.lineWidth;
+    this.ctx.lineWidth = 5;
     this.ctx.strokeRect(
       this.animation.topLeft.x + x,
       this.animation.topLeft.y,
       this.animation.boxSize,
       this.animation.boxSize
     );
+    this.ctx.lineWidth = oldWidth;
   };
 
   update = (deltaTime: number) => {
@@ -158,7 +161,7 @@ class HighlightPaletteAnimation implements Animation {
       this.totalDuration
     );
 
-    const t = this.elapsedTime / this.cycleDuration;
+    const t = Math.min(this.elapsedTime / this.cycleDuration, 1);
     this.currentIndex = Math.round(this.easingFunction(t) * this.finalIndex);
     const highlightIndex =
       this.currentIndex % this.animation.swatch.palette.length;
@@ -185,7 +188,7 @@ class HighlightPaletteAnimation implements Animation {
   };
 
   updateOpacity = (deltaTime: number) => {
-    const deltaOpacity = deltaTime / 6;
+    const deltaOpacity = deltaTime / 6 / 50;
     if (this.increasingOpacity) {
       this.boxOpacity += deltaOpacity;
 
