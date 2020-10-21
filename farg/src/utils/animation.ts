@@ -194,7 +194,7 @@ class HighlightPaletteAnimation implements Animation {
         this.increasingOpacity = false;
       }
     } else {
-      this.boxOpacity += deltaOpacity;
+      this.boxOpacity -= deltaOpacity;
 
       if (this.boxOpacity < 0) {
         this.boxOpacity = 0;
