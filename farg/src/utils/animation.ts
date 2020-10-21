@@ -20,6 +20,7 @@ namespace Anim {
 
   export type FadeOut = {
     type: AnimationType.FadeOut;
+    elapsedTime: number;
     duration: number;
     opacity: number;
     easingFunction: EasingFunction;
@@ -33,7 +34,6 @@ namespace Anim {
 type AnimationState = Anim.Active | Anim.FadeOut | Anim.Gone;
 
 export interface Animation {
-  opacity: number;
   animationState: AnimationState;
   update: (deltaTime: number) => boolean;
   draw: () => void;
@@ -49,7 +49,6 @@ abstract class BaseAnimation implements Animation {
   readonly ctx: CanvasRenderingContext2D;
   temporary = false;
   animationState: AnimationState = { type: AnimationType.Active };
-  opacity = 1;
 
   protected abstract updateAnimation: (deltaTime: number) => boolean;
   abstract draw: () => void;
@@ -63,11 +62,20 @@ abstract class BaseAnimation implements Animation {
     switch (this.animationState.type) {
       case AnimationType.Active:
         break;
-      case AnimationType.FadeOut:
-        this.opacity = Math.max(this.opacity - deltaTime / 6 / 50, 0);
-        if (this.opacity === 0)
+      case AnimationType.FadeOut: {
+        this.animationState.elapsedTime += deltaTime;
+        const t =
+          this.animationState.elapsedTime / this.animationState.duration;
+        this.animationState.opacity = Math.max(
+          1 - this.animationState.easingFunction(t),
+          0
+        );
+
+        if (this.animationState.opacity === 0)
           this.animationState = { type: AnimationType.Gone };
         break;
+      }
+
       case AnimationType.Gone:
         return true;
     }
@@ -80,6 +88,7 @@ abstract class BaseAnimation implements Animation {
   fadeOut = (duration: number, f: EasingFunction = (x: number) => x) => {
     this.animationState = {
       type: AnimationType.FadeOut,
+      elapsedTime: 0,
       duration,
       opacity: 1,
       easingFunction: f
@@ -115,7 +124,7 @@ abstract class BaseAnimation implements Animation {
 
   strokeRect = (x: number, y: number, w: number, h: number): void => {
     const resetContext = this.updateContext();
-    this.ctx.fillRect(x, y, w, h);
+    this.ctx.strokeRect(x, y, w, h);
     resetContext();
   };
 }
