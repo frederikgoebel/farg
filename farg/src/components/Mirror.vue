@@ -11,7 +11,6 @@ import * as tf from '@tensorflow/tfjs';
 import * as posenet from '@tensorflow-models/posenet';
 import * as mirror from '../utils/mirror';
 import StateMachine from '../utils/statemachine';
-
 export default {
   data: () => ({
     renderLayer: null,
@@ -24,7 +23,6 @@ export default {
     },
     draw() {
       this.resize(this.$refs.canvas);
-
       this.stateMachine.tick(this.$refs.canvas.getContext("2d"), this.$refs.video, this.$refs.videoBuffer.getContext("2d"), this.net).then(() => {
         window.requestAnimationFrame(this.draw);
       })
@@ -72,7 +70,6 @@ export default {
   height: 100%;
   width: 30%;
 }
-
 .canvas {
   flex-grow: 1;
 }
