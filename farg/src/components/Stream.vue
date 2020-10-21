@@ -38,7 +38,7 @@ export default {
   },
   computed: {
     swatchesToShow() {
-      return this.swatches.reverse()
+      return this.swatches.slice().reverse()
     }
   },
   methods: {
