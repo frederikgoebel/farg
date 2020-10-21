@@ -1,3 +1,45 @@
+class PaletteAnimation {
+  constructor(ctx, palette, topLeft, boxSize, duration) {
+    this.ctx = ctx;
+    this.palette = palette;
+    this.topLeft = { ...topLeft };
+    this.current = { ...topLeft };
+    this.boxSize = boxSize;
+    this.duration = duration;
+    this.finished = false;
+    this.temporary = false;
+  }
+
+  setTemporary = (value) => (this.temporary = value);
+
+  update = (delta) => {
+    if (!delta) return;
+    if (!this.finished) {
+      this.currentColorIndex = Math.floor(
+        Math.abs(this.current.x - this.topLeft.x) / this.boxSize
+      );
+      const part = delta / this.duration;
+      this.current.x += this.palette.length * this.boxSize * part;
+      if (this.currentColorIndex >= this.palette.length) {
+        this.currentColorIndex = this.palette.length - 1;
+        this.finished = true;
+      }
+    }
+
+    for (let i = 0; i < this.currentColorIndex + 1; i++) {
+      this.ctx.fillStyle = this.palette[i];
+      this.ctx.fillRect(
+        this.topLeft.x + this.boxSize * i,
+        this.topLeft.y,
+        this.boxSize,
+        this.boxSize
+      );
+    }
+
+    return this.finished;
+  };
+}
+
 class LineAnimation {
   constructor(ctx, from, to, duration) {
     this.ctx = ctx;
@@ -91,4 +133,4 @@ class Sequential {
   };
 }
 
-export { Parallel, Sequential, LineAnimation };
+export { Parallel, Sequential, LineAnimation, PaletteAnimation };
