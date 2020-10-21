@@ -1,27 +1,19 @@
 <template>
-  <transition-group name="stream" tag="div" id="color-stream" class="row">
-    <div
-      v-for="(swatch, index) in swatches"
-      :key="`swatch-${index}`"
-      class="color-column"
-    >
-      <div
-        v-for="(color, index) in swatch"
-        :key="`color-${index}`"
-        class="color-field"
-        :style="{ background: color }"
-      ></div>
+<transition-group name="stream" tag="div" id="color-stream" class="row">
+  <div v-for="(swatch, index) in swatches" :key="`swatch-${index}`" class="color-column">
+    <div v-for=" (color, index) in swatch" :key="`color-${index}`" class="color-field" :style="{background:  color  }">
     </div>
-  </transition-group>
+  </div>
+</transition-group>
 </template>
 
 <script>
 export default {
   components: {},
   props: {
-    swatches: Array
-  }
-};
+    swatches: Array,
+  },
+}
 </script>
 
 <style>
@@ -32,7 +24,6 @@ export default {
   overflow: hidden;
   flex-direction: row-reverse;
 }
-
 .color-column {
   height: 100%;
   flex-grow: 1;
@@ -41,16 +32,13 @@ export default {
   display: flex;
   flex-direction: column;
 }
-
 .color-field {
   flex-grow: 1;
   background: red;
 }
-
 .stream-enter {
   flex-grow: 0.0000001;
 }
-
 .color-column:hover {
   width: 200px;
 }

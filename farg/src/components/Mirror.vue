@@ -1,24 +1,21 @@
 <template>
-  <div class="mirror">
-    <canvas class="canvas" ref="canvas"></canvas>
-    <video ref="video" playsinline autoplay style="display: none;"></video>
-    <canvas ref="videoBuffer" style="display: none;"></canvas>
-  </div>
+<div class="mirror">
+  <canvas class="canvas" ref="canvas"></canvas>
+  <video ref="video" playsinline autoplay style="display: none;"> </video>
+  <canvas ref="videoBuffer" style="display: none;"></canvas>
+</div>
 </template>
 
 <script>
-import * as tf from "@tensorflow/tfjs";
-import * as posenet from "@tensorflow-models/posenet";
-import * as mirror from "../utils/mirror";
-import StateMachine from "../utils/statemachine";
-
-const NotFoundError = 8;
-
+import * as tf from '@tensorflow/tfjs';
+import * as posenet from '@tensorflow-models/posenet';
+import * as mirror from '../utils/mirror';
+import StateMachine from '../utils/statemachine';
 export default {
   data: () => ({
     renderLayer: null,
     stateMachine: null,
-    net: null
+    net: null,
   }),
   methods: {
     swatchAdded(swatch) {
@@ -26,17 +23,9 @@ export default {
     },
     draw() {
       this.resize(this.$refs.canvas);
-
-      this.stateMachine
-        .tick(
-          this.$refs.canvas.getContext("2d"),
-          this.$refs.video,
-          this.$refs.videoBuffer.getContext("2d"),
-          this.net
-        )
-        .then(() => {
-          window.requestAnimationFrame(this.draw);
-        });
+      this.stateMachine.tick(this.$refs.canvas.getContext("2d"), this.$refs.video, this.$refs.videoBuffer.getContext("2d"), this.net).then(() => {
+        window.requestAnimationFrame(this.draw);
+      })
     },
     resize(canvas) {
       const width = canvas.clientWidth;
@@ -47,43 +36,31 @@ export default {
         this.$refs.videoBuffer.width = width;
         this.$refs.videoBuffer.height = height;
       }
-    }
+    },
   },
   mounted() {
     this.stateMachine = new StateMachine(this.swatchAdded);
-    mirror
-      .setupCamera(this.$refs.video)
-      .then(() => {
-        mirror.setupVideoBuffer(this.$refs.videoBuffer, this.$refs.video);
-        this.renderLayer = this.$refs.canvas.getContext("2d");
-        tf.enableProdMode();
-        posenet
-          .load
-          //   {
-          //   architecture: 'MobileNetV1',
-          //   outputStride: 16,
-          //   inputResolution: { width: 257, height: 257 },
-          //   multiplier: 0.75,
-          // }
-          ()
-          .then(net => {
-            console.log("backend:", tf.getBackend());
-            this.net = net;
-            window.requestAnimationFrame(this.draw);
-          })
-          .catch(err => {
-            throw err;
-          });
+    mirror.setupCamera(this.$refs.video).then(() => {
+      mirror.setupVideoBuffer(this.$refs.videoBuffer, this.$refs.video)
+      this.renderLayer = this.$refs.canvas.getContext("2d");
+      tf.enableProdMode()
+      posenet.load(
+        //   {
+        //   architecture: 'MobileNetV1',
+        //   outputStride: 16,
+        //   inputResolution: { width: 257, height: 257 },
+        //   multiplier: 0.75,
+        // }
+      ).then((net) => {
+        console.log("backend:", tf.getBackend());
+        this.net = net;
+        window.requestAnimationFrame(this.draw);
+      }).catch((err) => {
+        throw (err)
       })
-      .catch(err => {
-        if (err.code === NotFoundError) {
-          alert("Could not find a camera.");
-        } else {
-          console.error("Error when trying to setup camera: ", err.message);
-        }
-      });
-  }
-};
+    })
+  },
+}
 </script>
 
 <style>
@@ -93,7 +70,6 @@ export default {
   height: 100%;
   width: 30%;
 }
-
 .canvas {
   flex-grow: 1;
 }
