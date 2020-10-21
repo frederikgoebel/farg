@@ -9,13 +9,19 @@ import {
   drawKeypoints,
 } from "./mirror";
 
+import { Shapeshifter } from './skeleton'
 import pixelator, { generateSwatches } from "./pixelator";
 
 const frontColor = "#F7566A";
 const backColor = "#023F92";
 
 class Idle {
-  constructor() {}
+  constructor() {
+    this.shapeshifter = new Shapeshifter({
+      x: 200,
+      y: 400
+    })
+  }
   async tick(drawCtx, video, videoBuffer, posenet) {
     let collisionBody = new CollisionBody(
       {
@@ -35,13 +41,76 @@ class Idle {
     drawCtx.fillStyle = backColor;
     drawCtx.fill();
 
+
+    drawCtx.save();
+    drawPathShape(drawCtx, this.shapeshifter.shape)
+    drawCtx.clip();
     drawCtx.drawImage(videoBuffer.canvas, 0, 0);
+    drawCtx.restore();
 
     collisionBody.debugDraw(drawCtx);
     drawKeypoints(pose.keypoints, 0.6, drawCtx);
 
-    if (allIn) return "found";
-    return "idle";
+    // let blob = new Blob([])
+    // blob.canvas = drawCtx.canvas;
+    // pose.keypoints.forEach((keypoint) => {
+    //   blob.points.push(new Point(keypoint.position.x, keypoint.position.y))
+    // })
+
+    // let blob = new Blob([new Point(1, 1), new Point(100, 1), new Point(100, 100), new Point(20, 200), new Point(50, 50)]);
+
+
+    //blob.render();
+    let leftEye ,
+      rightEye,
+      nose,
+      leftShoulder,
+      rightShoulder;
+    pose.keypoints.forEach((keypoint) => {
+      if (keypoint.part == "leftEye")
+        leftEye = keypoint.position
+      if (keypoint.part == "rightEye")
+        rightEye = keypoint.position
+      if (keypoint.part == "nose")
+        nose = keypoint.position
+      if (keypoint.part == "leftShoulder")
+        leftShoulder = keypoint.position
+      if (keypoint.part == "rightShoulder")
+        rightShoulder = keypoint.position
+    })
+
+    this.shapeshifter.tick(pose.keypoints, drawCtx)
+
+    drawCtx.save();
+    drawCtx.lineWidth = 10;
+    drawCtx.globalCompositeOperation = "screen";
+
+    drawCtx.translate(0, 0);
+    drawPathShape(drawCtx, this.shapeshifter.shape)
+    drawCtx.strokeStyle = "red";
+    drawCtx.stroke();
+
+    drawCtx.translate(5, 0);
+    drawPathShape(drawCtx, this.shapeshifter.shape)
+    drawCtx.strokeStyle = "blue";
+    drawCtx.stroke();
+
+    drawCtx.translate(2, 4);
+    drawPathShape(drawCtx, this.shapeshifter.shape)
+    drawCtx.strokeStyle = "green";
+    drawCtx.stroke();
+
+    drawCtx.translate(-4, -2);
+    drawPathShape(drawCtx, this.shapeshifter.shape)
+    drawCtx.strokeStyle = "cyan";
+    drawCtx.stroke();
+
+    drawCtx.restore()
+
+
+    if (allIn)
+      return "idle"
+    return "idle"
   }
 }
 
