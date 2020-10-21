@@ -9,7 +9,7 @@ import {
   drawKeypoints,
 } from "./mirror";
 
-import { generateSwatches } from "./pixelator";
+import generateSwatches from "./pixelator";
 import {
   getHairBB,
   getFaceBB,

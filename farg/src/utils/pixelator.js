@@ -8,7 +8,6 @@ import {
   getThighsBB,
   getFeetBB,
 } from "./getBoundingBoxes";
-const ROWS = 6;
 
 // options with defaults (not required)
 const options = {
@@ -26,61 +25,6 @@ const options = {
   useCache: true, // enables caching for perf usually, but can reduce perf in some cases, like pre-def palettes
   cacheFreq: 10, // min color occurance count needed to qualify for caching
   colorDist: "euclidean", // method used to determine color distance, can also be "manhattan"
-};
-
-// Generate palette by reading the middle column of the image
-const generatePalette = (imageCanvas, pose) => {
-  const { keypoints } = pose;
-  const colorPalettes = [];
-  const imageLoader = document.getElementById("image-loader");
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  const imgCtx = imageCanvas.getContext("2d");
-  canvas.width = imageCanvas.width;
-  canvas.height = imageCanvas.height;
-  const blockSize = Math.floor(canvas.height / ROWS);
-  ctx.putImageData(
-    imgCtx.getImageData(0, 0, imageCanvas.width, imageCanvas.height),
-    0,
-    0
-  );
-  keypoints.forEach((keypoint) => {
-    ctx.beginPath();
-    ctx.ellipse(
-      keypoint.position.x,
-      keypoint.position.y,
-      5,
-      5,
-      0,
-      0,
-      Math.PI * 2
-    );
-    ctx.stroke();
-  });
-
-  // imageLoader.appendChild(canvas);
-  for (let i = 0; i < ROWS; i++) {
-    const canvasBlock = document.createElement("canvas");
-    canvasBlock.width = blockSize;
-    canvasBlock.height = blockSize;
-    const ctxBlock = canvasBlock.getContext("2d");
-    const imageData = ctx.getImageData(
-      (canvas.width - blockSize) / 2,
-      i * blockSize,
-      blockSize,
-      blockSize
-    );
-    ctxBlock.putImageData(imageData, 0, 0);
-    const q = new RgbQuant(options);
-    q.sample(canvasBlock);
-    colorPalettes.push(q.palette());
-    // imageLoader.append(canvasBlock);
-  }
-
-  return colorPalettes.map(
-    (palette) =>
-      `rgba(${palette[0]}, ${palette[1]}, ${palette[2]}, ${palette[3]})`
-  );
 };
 
 // Retrieve color from a specific area using BBs
@@ -108,8 +52,6 @@ const getColor = (imageCanvas, { startX, startY, endX, endY }) => {
     colorDiv.style.background = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
     div.append(colorDiv);
   }
-
-  // const [red, green, blue, alpha] = swatches.slice(0, 4);
 
   const imageLoader = document.getElementById("image-loader");
   imageLoader.append(canvas);
@@ -140,4 +82,4 @@ export const generateSwatches = (imageCanvas, pose) => {
   return [hairBox, skinBox, upperBodyBox, lowerBodyBox, thighsBox, feetBox];
 };
 
-export default generatePalette;
+export default generateSwatches;
