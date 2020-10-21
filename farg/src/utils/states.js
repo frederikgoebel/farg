@@ -19,7 +19,12 @@ import {
   getFeetBB,
 } from "./getBoundingBoxes";
 
-import { Parallel, Sequential, LineAnimation } from "./animation";
+import {
+  Parallel,
+  Sequential,
+  LineAnimation,
+  PaletteAnimation,
+} from "./animation";
 
 const frontColor = "#F7566A";
 const backColor = "#023F92";
@@ -235,10 +240,21 @@ class ColorSteal {
         );
       });
 
-      this.animation = new Sequential(new Parallel(...lineAnimations));
+      const paletteAnimations = this.boundingBoxes.map(
+        (bb, index) =>
+          new PaletteAnimation(
+            drawCtx,
+            palettes[index],
+            { x: bb.endX + 20, y: bb.startY - 20 },
+            32,
+            DURATION_MS
+          )
+      );
 
-      // Generate swatch by reading the different keypoints of the pose
-      this.swatch = generateSwatches(videoBuffer.canvas, this.pose);
+      this.animation = new Sequential(
+        new Parallel(...lineAnimations),
+        new Parallel(...paletteAnimations)
+      );
       this.FIRST_TIME = false;
     }
 
