@@ -2,6 +2,15 @@ import RgbQuant from "rgbquant";
 import getProminentColor from "./colorDifference";
 const ROWS = 6;
 
+export type Swatch = string[];
+
+export interface BoundingBox {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+}
+
 // options with defaults (not required)
 const options = {
   colors: 7, // desired palette size
@@ -17,16 +26,20 @@ const options = {
   reIndex: false, // affects predefined palettes only. if true, allows compacting of sparsed palette once target palette size is reached. also enables palette sorting.
   useCache: true, // enables caching for perf usually, but can reduce perf in some cases, like pre-def palettes
   cacheFreq: 10, // min color occurance count needed to qualify for caching
-  colorDist: "euclidean", // method used to determine color distance, can also be "manhattan"
+  colorDist: "euclidean" // method used to determine color distance, can also be "manhattan"
 };
 
 // Generate palette by reading the middle column of the image
 const generatePalette = (imageCanvas, pose) => {
   const { keypoints } = pose;
-  const colorPalettes = [];
+  const colorPalettes: any[] = [];
   const imageLoader = document.getElementById("image-loader");
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
+  if (ctx === null) {
+    console.error("Could not get canvas 2D context.");
+    return [];
+  }
   const imgCtx = imageCanvas.getContext("2d");
   canvas.width = imageCanvas.width;
   canvas.height = imageCanvas.height;
@@ -36,7 +49,7 @@ const generatePalette = (imageCanvas, pose) => {
     0,
     0
   );
-  keypoints.forEach((keypoint) => {
+  keypoints.forEach(keypoint => {
     ctx.beginPath();
     ctx.ellipse(
       keypoint.position.x,
@@ -62,6 +75,10 @@ const generatePalette = (imageCanvas, pose) => {
       blockSize,
       blockSize
     );
+    if (ctxBlock === null) {
+      console.error("Could not get canvasBlock 2D context.");
+      continue;
+    }
     ctxBlock.putImageData(imageData, 0, 0);
     const q = new RgbQuant(options);
     q.sample(canvasBlock);
@@ -70,16 +87,20 @@ const generatePalette = (imageCanvas, pose) => {
   }
 
   return colorPalettes.map(
-    (palette) =>
+    palette =>
       `rgba(${palette[0]}, ${palette[1]}, ${palette[2]}, ${palette[3]})`
   );
 };
 
 // Retrieve color from a specific area using BBs
-const getColor = (imageCanvas, { startX, startY, endX, endY }) => {
+const getColor = (imageCanvas, { startX, startY, endX, endY }): string => {
   const imgCtx = imageCanvas.getContext("2d");
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
+  if (ctx === null) {
+    console.error("Could not get canvas 2D context.");
+    return ``;
+  }
   const width = Math.abs(startX - endX);
   const height = Math.abs(startY - endY);
   canvas.width = width;
@@ -104,6 +125,10 @@ const getColor = (imageCanvas, { startX, startY, endX, endY }) => {
   // const [red, green, blue, alpha] = swatches.slice(0, 4);
 
   const imageLoader = document.getElementById("image-loader");
+  if (imageLoader === null) {
+    console.error("Could not get image-loader element.");
+    return ``;
+  }
   imageLoader.append(canvas);
   imageLoader.append(div);
 
@@ -112,7 +137,7 @@ const getColor = (imageCanvas, { startX, startY, endX, endY }) => {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 };
 
-export const getHairBB = (keypoints) => {
+export const getHairBB = (keypoints): BoundingBox => {
   const leftEar = keypoints.filter(({ part }) => part === "leftEar")[0]
     .position;
   const leftEye = keypoints.filter(({ part }) => part === "leftEye")[0]
@@ -128,7 +153,7 @@ export const getHairBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-export const getFaceBB = (keypoints) => {
+export const getFaceBB = (keypoints): BoundingBox => {
   const leftEar = keypoints.filter(({ part }) => part === "leftEar")[0]
     .position;
   const rightEar = keypoints.filter(({ part }) => part === "rightEar")[0]
@@ -142,7 +167,7 @@ export const getFaceBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-export const getUpperBodyBB = (keypoints) => {
+export const getUpperBodyBB = (keypoints): BoundingBox => {
   const leftShoulder = keypoints.filter(
     ({ part }) => part === "leftShoulder"
   )[0].position;
@@ -160,7 +185,7 @@ export const getUpperBodyBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-export const getLowerBodyBB = (keypoints) => {
+export const getLowerBodyBB = (keypoints): BoundingBox => {
   const elbow = keypoints.filter(({ part }) => part === "leftElbow")[0]
     .position;
   const leftHip = keypoints.filter(({ part }) => part === "leftHip")[0]
@@ -176,7 +201,7 @@ export const getLowerBodyBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-export const getThighsBB = (keypoints) => {
+export const getThighsBB = (keypoints): BoundingBox => {
   const leftHip = keypoints.filter(({ part }) => part === "leftHip")[0]
     .position;
   const rightKnee = keypoints.filter(({ part }) => part === "rightKnee")[0]
@@ -190,7 +215,7 @@ export const getThighsBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-export const getFeetBB = (keypoints) => {
+export const getFeetBB = (keypoints): BoundingBox => {
   const leftAnkle = keypoints.filter(({ part }) => part === "leftAnkle")[0]
     .position;
 
@@ -202,7 +227,7 @@ export const getFeetBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-export const generateSwatches = (imageCanvas, pose) => {
+export const generateSwatches = (imageCanvas, pose): Swatch => {
   const { keypoints } = pose;
 
   const hairBB = getHairBB(keypoints);

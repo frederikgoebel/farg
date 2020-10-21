@@ -1,5 +1,26 @@
-class LineAnimation {
-  constructor(ctx, from, to, duration) {
+type Point2D = { x: number; y: number };
+
+export interface Animation {
+  update: (delta: number) => boolean;
+  temporary: boolean;
+}
+
+class LineAnimation implements Animation {
+  ctx: CanvasRenderingContext2D;
+  from: Point2D;
+  to: Point2D;
+  current: Point2D;
+  duration: number;
+  abs: Point2D;
+  temporary = false;
+  finished: boolean;
+
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    from: Point2D,
+    to: Point2D,
+    duration: number
+  ) {
     this.ctx = ctx;
     this.from = { ...from };
     this.to = { ...to };
@@ -10,12 +31,12 @@ class LineAnimation {
     this.finished = false;
   }
 
-  setTemporary = (value) => {
+  setTemporary = value => {
     this.temporary = value;
   };
 
-  update = (delta) => {
-    if (!delta) return;
+  update = (delta: number) => {
+    if (!delta || delta === 0) return false;
     if (!this.finished) {
       const part = delta / this.duration;
       this.current.x += (this.to.x - this.from.x) * part;
@@ -37,12 +58,14 @@ class LineAnimation {
     return this.finished;
   };
 }
-class Parallel {
-  constructor(...animations) {
+class Parallel implements Animation {
+  temporary = false;
+  animations: Animation[];
+  constructor(...animations: Animation[]) {
     this.animations = animations;
   }
 
-  update = (delta) => {
+  update = (delta: number) => {
     if (this.animations.length === 0) return true;
 
     let allFinished = true;
@@ -53,7 +76,7 @@ class Parallel {
       if (finished && this.animations[i].temporary) {
         this.animations.splice(i, 1);
       } else {
-        allFinished &= finished;
+        allFinished = allFinished && finished;
         ++i;
       }
     }
@@ -62,16 +85,19 @@ class Parallel {
   };
 }
 
-class Sequential {
-  constructor(...animations) {
+class Sequential implements Animation {
+  temporary = false;
+  animations: Animation[];
+
+  constructor(...animations: Animation[]) {
     this.animations = animations;
   }
 
-  add = (animation) => {
-    this.animations.add(animation);
+  add = (animation: Animation) => {
+    this.animations.push(animation);
   };
 
-  update = (delta) => {
+  update = (delta: number) => {
     if (this.animations.length === 0) return true;
 
     let i = 0;

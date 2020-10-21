@@ -12,7 +12,7 @@ const usedKeyPointParts = new Set([
   "leftHip",
   "rightHip",
   "rightKnee",
-  "leftAnkle",
+  "leftAnkle"
 ]);
 
 const frontColor = "#F7566A";
@@ -72,7 +72,7 @@ class CollisionBody {
       new SAT.Vector(80 * scale, 220 * scale),
       new SAT.Vector(20 * scale, 220 * scale),
       new SAT.Vector(20 * scale, 120 * scale),
-      new SAT.Vector(0, 120 * scale),
+      new SAT.Vector(0, 120 * scale)
     ]);
   }
   colliding(pose) {
@@ -108,7 +108,7 @@ class CollisionBody {
     );
     ctx.translate(this.body.pos.x, this.body.pos.y);
     ctx.moveTo(0, 0);
-    this.body.points.forEach((vector) => {
+    this.body.points.forEach(vector => {
       ctx.lineTo(vector.x, vector.y);
     });
     ctx.closePath();
@@ -136,11 +136,11 @@ async function setupCamera(video) {
   console.log(navigator.mediaDevices.getSupportedConstraints());
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: false,
-    video: true,
+    video: true
   });
   video.srcObject = stream;
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     video.onloadedmetadata = () => {
       resolve(video);
     };
@@ -164,7 +164,7 @@ function saveVideoToBuffer(video, buffer) {
 async function getPose(net, video) {
   const pose = await net.estimateSinglePose(video, {
     flipHorizontal: false,
-    decodingMethod: "single-person",
+    decodingMethod: "single-person"
   });
   pose.keypoints = pose.keypoints.filter(({ score }) => score > 0.6);
   return pose;
@@ -179,7 +179,7 @@ let drawList = [];
 for (let i = 0; i < numbers.length; i += 2) {
   drawList.push({
     x: numbers[i] - 67.0,
-    y: numbers[i + 1] - 125.0,
+    y: numbers[i + 1] - 125.0
   });
 }
 
@@ -190,7 +190,7 @@ function drawBody(ctx, color) {
   ctx.scale(1.25, 1.0);
   ctx.beginPath();
   ctx.moveTo(drawList[0].x, drawList[0].y);
-  drawList.forEach((point) => {
+  drawList.forEach(point => {
     ctx.lineTo(point.x, point.y);
   });
   ctx.closePath();
@@ -212,5 +212,5 @@ export {
   saveVideoToBuffer,
   getPose,
   CollisionBody,
-  drawKeypoints,
+  drawKeypoints
 };

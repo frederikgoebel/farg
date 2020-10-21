@@ -1,19 +1,27 @@
 <template>
-<transition-group name="stream" tag="div" id="color-stream" class="row">
-  <div v-for="(swatch, index) in swatches" :key="`swatch-${index}`" class="color-column">
-    <div v-for=" (color, index) in swatch" :key="`color-${index}`" class="color-field" :style="{background:  color  }">
+  <transition-group name="stream" tag="div" id="color-stream" class="row">
+    <div
+      v-for="(swatch, index) in swatches"
+      :key="`swatch-${index}`"
+      class="color-column"
+    >
+      <div
+        v-for="(color, index) in swatch"
+        :key="`color-${index}`"
+        class="color-field"
+        :style="{ background: color }"
+      ></div>
     </div>
-  </div>
-</transition-group>
+  </transition-group>
 </template>
 
 <script>
 export default {
   components: {},
   props: {
-    swatches: Array,
-  },
-}
+    swatches: Array
+  }
+};
 </script>
 
 <style>
