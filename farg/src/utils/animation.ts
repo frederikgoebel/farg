@@ -289,6 +289,8 @@ class HighlightPaletteAnimation extends BaseAnimation {
       this.totalDurationMs
     );
 
+    this.state.elapsedTime += deltaTime;
+
     const t = Math.min(this.elapsedTime / this.cycleDurationMs, 1);
     this.currentIndex = Math.round(this.easingFunction(t) * this.finalIndex);
     const highlightIndex =
@@ -422,6 +424,7 @@ export class LineAnimation extends BaseAnimation {
         this.abs.y <= Math.abs(this.current.y - this.from.y)
       ) {
         this.current = this.to;
+        // console.log("LineAnimation finished");
         this.finished = true;
       }
     }
@@ -465,7 +468,11 @@ export class Parallel extends BaseAnimation {
       }
     }
 
+    // const wasFinished = this.finished;
     this.finished = allFinished;
+    // if (!wasFinished && this.finished) {
+    //   console.log("Parallel finished");
+    // }
 
     return this.isFinished();
   };
@@ -509,7 +516,11 @@ export class Sequential extends BaseAnimation {
       }
     }
 
+    // const wasFinished = this.finished;
     this.finished = true;
+    // if (!wasFinished && this.finished) {
+    //   console.log("Sequential finished");
+    // }
     return this.isFinished();
   };
 

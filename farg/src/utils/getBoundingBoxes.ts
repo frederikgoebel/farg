@@ -5,6 +5,13 @@ export interface BoundingBox {
   endY: number;
 }
 
+export const mockBB: BoundingBox = {
+  startX: 0,
+  startY: 0,
+  endX: 100,
+  endY: 100
+};
+
 export const getHairBB = (keypoints): BoundingBox => {
   const leftEar = keypoints.filter(({ part }) => part === "leftEar")[0]
     .position;

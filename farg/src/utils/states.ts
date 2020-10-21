@@ -9,7 +9,7 @@ import {
   drawKeypoints
 } from "./mirror";
 
-import generateSwatches from "./pixelator";
+import generateSwatches, { ColorSample, mockSwatch } from "./pixelator";
 import {
   getHairBB,
   getFaceBB,
@@ -17,7 +17,8 @@ import {
   getLowerBodyBB,
   getThighsBB,
   getFeetBB,
-  BoundingBox
+  BoundingBox,
+  mockBB
 } from "./getBoundingBoxes";
 
 import { Swatch } from "./pixelator";
@@ -35,9 +36,13 @@ import {
 const frontColor = "#F7566A";
 const backColor = "#023F92";
 
+const __DEBUG_MODE = false;
+
 class Idle {
   constructor() {}
   async tick(drawCtx, video, videoBuffer, posenet) {
+    if (__DEBUG_MODE) return "colorSteal";
+
     let collisionBody = new CollisionBody(
       {
         x: 20,
@@ -173,7 +178,6 @@ class ColorSteal {
   pose: any;
   boundingBoxes?: BoundingBox[];
   swatch: Swatch = [];
-  ANIMATION_FINISHED: boolean = false;
   lastUpdate?: number;
   deltaTime: number = 0;
   animation?: Animation;
@@ -197,27 +201,34 @@ class ColorSteal {
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
     drawCtx.save();
-    drawCtx.drawImage(
-      videoBuffer.canvas,
-      0,
-      0,
-      videoBuffer.canvas.width,
-      videoBuffer.canvas.height
-    );
+    if (!__DEBUG_MODE) {
+      drawCtx.drawImage(
+        videoBuffer.canvas,
+        0,
+        0,
+        videoBuffer.canvas.width,
+        videoBuffer.canvas.height
+      );
+    }
+
     drawCtx.restore();
 
     if (this.FIRST_TIME) {
-      this.pose = await getPose(posenet, videoBuffer.canvas);
+      if (!__DEBUG_MODE) {
+        this.pose = await getPose(posenet, videoBuffer.canvas);
 
-      const { keypoints } = this.pose;
-      this.boundingBoxes = [
-        getHairBB(keypoints),
-        getFaceBB(keypoints),
-        getUpperBodyBB(keypoints),
-        getLowerBodyBB(keypoints),
-        getThighsBB(keypoints),
-        getFeetBB(keypoints)
-      ];
+        const { keypoints } = this.pose;
+        this.boundingBoxes = [
+          getHairBB(keypoints),
+          getFaceBB(keypoints),
+          getUpperBodyBB(keypoints),
+          getLowerBodyBB(keypoints),
+          getThighsBB(keypoints),
+          getFeetBB(keypoints)
+        ];
+      } else {
+        this.boundingBoxes = Array(6).fill(mockBB);
+      }
 
       const margin = 32;
 
@@ -228,9 +239,12 @@ class ColorSteal {
       drawCtx.strokeStyle = "white";
 
       // Generate swatches by reading the different keypoints of the pose
-      const swatches = generateSwatches(videoBuffer.canvas, this.pose);
-
-      const palettes = swatches.map(s => s.palette);
+      let swatches: ColorSample[] = [];
+      if (!__DEBUG_MODE) {
+        swatches = generateSwatches(videoBuffer.canvas, this.boundingBoxes);
+      } else {
+        swatches = Array(7).fill(mockSwatch);
+      }
 
       this.swatch = swatches.map(s => s.prominentColor);
 
@@ -296,23 +310,25 @@ class ColorSteal {
     if (this.animation) {
       this.animation.update(this.deltaTime);
       this.animation.draw();
-      if (this.animation.isFinished()) delete this.animation;
+
+      if (this.animation.isFinished()) {
+        this.colorCallback(this.swatch);
+        this.FIRST_TIME = true;
+
+        this.deltaTime = 0;
+
+        delete this.lastUpdate;
+        delete this.animation;
+
+        console.log("Animation finished.");
+
+        return "idle";
+      }
     }
 
     // drawKeypoints(pose.keypoints, 0.6, drawCtx);
 
-    if (this.ANIMATION_FINISHED) {
-      this.colorCallback(this.swatch);
-      this.FIRST_TIME = true;
-      this.ANIMATION_FINISHED = false;
-      this.deltaTime = 0;
-
-      delete this.lastUpdate;
-
-      return "idle";
-    } else {
-      return "colorSteal"; // TODO return colorSteal until everything is done
-    }
+    return "colorSteal"; // TODO return colorSteal until everything is done
   }
 }
 

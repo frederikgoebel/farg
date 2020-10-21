@@ -6,7 +6,8 @@ import {
   getUpperBodyBB,
   getLowerBodyBB,
   getThighsBB,
-  getFeetBB
+  getFeetBB,
+  BoundingBox
 } from "./getBoundingBoxes";
 
 export type Swatch = string[];
@@ -84,15 +85,30 @@ const getColorSamples = (
   return sampledColors;
 };
 
-export const generateSwatches = (imageCanvas, pose): ColorSample[] => {
-  const { keypoints } = pose;
+export const mockSwatch: ColorSample = {
+  palette: [
+    "#000000",
+    "#111111",
+    "#222222",
+    "#333333",
+    "#444444",
+    "#555555",
+    "#666666",
+    "#777777"
+  ],
+  prominentColor: "#444444"
+};
 
-  const hairBB = getHairBB(keypoints);
-  const faceBB = getFaceBB(keypoints);
-  const upperBodyBB = getUpperBodyBB(keypoints);
-  const lowerBodyBB = getLowerBodyBB(keypoints);
-  const thighsBB = getThighsBB(keypoints);
-  const feetBB = getFeetBB(keypoints);
+export const generateSwatches = (
+  imageCanvas,
+  boundingBoxes: BoundingBox[]
+): ColorSample[] => {
+  const hairBB = boundingBoxes[0];
+  const faceBB = boundingBoxes[1];
+  const upperBodyBB = boundingBoxes[2];
+  const lowerBodyBB = boundingBoxes[3];
+  const thighsBB = boundingBoxes[4];
+  const feetBB = boundingBoxes[5];
 
   const hairBox = getColorSamples(imageCanvas, hairBB);
   const skinBox = getColorSamples(imageCanvas, faceBB);

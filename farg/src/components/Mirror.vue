@@ -12,6 +12,8 @@ import * as posenet from '@tensorflow-models/posenet';
 import * as mirror from '../utils/mirror';
 import StateMachine from '../utils/statemachine';
 
+const __DEBUG_MODE = false;
+
 export default {
   data: () => ({
     renderLayer: null,
@@ -20,14 +22,17 @@ export default {
   }),
   methods: {
     swatchAdded(swatch) {
-      this.$emit("swatchAdded", swatch);
+        this.$emit("swatchAdded", swatch);
     },
     draw() {
       this.resize(this.$refs.canvas);
-
-      this.stateMachine.tick(this.$refs.canvas.getContext("2d"), this.$refs.video, this.$refs.videoBuffer.getContext("2d"), this.net).then(() => {
-        window.requestAnimationFrame(this.draw);
-      })
+      if (__DEBUG_MODE) {
+        this.stateMachine.tick(this.$refs.canvas.getContext("2d"), null, null, null).then(() => window.requestAnimationFrame(this.draw));
+      } else {
+        this.stateMachine.tick(this.$refs.canvas.getContext("2d"), this.$refs.video, this.$refs.videoBuffer.getContext("2d"), this.net).then(() => {
+          window.requestAnimationFrame(this.draw);
+        });
+      }
     },
     resize(canvas) {
       const width = canvas.clientWidth;
@@ -61,6 +66,11 @@ export default {
         throw (err)
       })
     })
+    .catch(err => {
+      console.log(err);
+      window.requestAnimationFrame(this.draw);
+    }
+      )
   },
 }
 </script>
