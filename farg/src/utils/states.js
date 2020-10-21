@@ -194,6 +194,13 @@ class ColorSteal {
       drawCtx.lineWidth = 1;
       drawCtx.strokeStyle = "white";
 
+      // Generate swatches by reading the different keypoints of the pose
+      const swatches = generateSwatches(videoBuffer.canvas, this.pose);
+
+      const palettes = swatches.map((s) => s.palette);
+
+      this.swatch = swatches.map((s) => s.prominentColor);
+
       const DURATION_MS = 3000;
       const lineAnimations = this.boundingBoxes.map((bb) => {
         const topHorizontal = new LineAnimation(
