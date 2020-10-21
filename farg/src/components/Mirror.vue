@@ -70,7 +70,7 @@ export default {
 
 <style>
 .mirror {
-  display: flex;
+  display: block;
   align-items: stretch;
   height: 100%;
   width: 25%;
@@ -79,6 +79,7 @@ export default {
 }
 
 .canvas {
-  flex-grow: 1;
+  width: 100%;
+  height: 100%;
 }
 </style>
