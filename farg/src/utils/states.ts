@@ -219,6 +219,16 @@ class ColorSteal {
         getFeetBB(keypoints)
       ];
 
+      const hairOverlap =
+        this.boundingBoxes[0].endY - this.boundingBoxes[1].startY;
+
+      if (hairOverlap > 0) {
+        const margin = 14;
+
+        this.boundingBoxes[0].startY -= hairOverlap + margin;
+        this.boundingBoxes[0].endY -= hairOverlap + margin;
+      }
+
       drawCtx.lineWidth = 1;
       drawCtx.strokeStyle = "white";
 
