@@ -97,7 +97,6 @@ class HighlightPaletteAnimation implements Animation {
   ctx: CanvasRenderingContext2D;
   LoopCount = 2;
   duration: number;
-  bufferedTime = 0;
   elapsedTime = 0;
 
   currentIndex = 0;
@@ -120,7 +119,7 @@ class HighlightPaletteAnimation implements Animation {
     );
     this.finalIndex = this.LoopCount * 2 + prominentIndex;
 
-    this.easingFunction = easingFunction ?? (() => this.DefaultChangeDeltaMs);
+    this.easingFunction = easingFunction ?? ((t: number) => t);
     this.ctx = animation.ctx;
     this.duration = duration;
   }
@@ -130,7 +129,6 @@ class HighlightPaletteAnimation implements Animation {
 
     if (!this.animation.update(deltaTime)) return false;
 
-    this.bufferedTime += deltaTime;
     this.elapsedTime = Math.min(this.elapsedTime + deltaTime, this.duration);
 
     const t = this.elapsedTime / this.duration;
