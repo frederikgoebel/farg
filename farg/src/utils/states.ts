@@ -309,7 +309,6 @@ class ColorSteal {
 
     if (this.animation) {
       this.animation.update(this.deltaTime);
-      this.animation.draw();
 
       if (this.animation.isFinished()) {
         this.colorCallback(this.swatch);

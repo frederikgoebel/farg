@@ -86,6 +86,8 @@ abstract class BaseAnimation implements Animation {
   };
 
   fadeOut = (duration: number, f: EasingFunction = (x: number) => x) => {
+    if (this.animationState.type === AnimationType.Gone) return;
+
     this.animationState = {
       type: AnimationType.FadeOut,
       elapsedTime: 0,
@@ -352,13 +354,17 @@ class HighlightPaletteAnimation extends BaseAnimation {
       this.ctx.globalAlpha = this.boxOpacity;
     }
 
-    this.ctx.lineWidth = 5;
-    this.strokeRect(
-      this.animation.topLeft.x + this.xOffset,
-      this.animation.topLeft.y,
-      this.animation.boxSize,
-      this.animation.boxSize
-    );
+    if (this.state.state !== HighlightPatternState.Cycling) {
+      this.ctx.save();
+      this.ctx.lineWidth = 5;
+      this.strokeRect(
+        this.animation.topLeft.x + this.xOffset,
+        this.animation.topLeft.y,
+        this.animation.boxSize,
+        this.animation.boxSize
+      );
+      this.ctx.restore();
+    }
 
     this.ctx.globalAlpha = oldOpacity;
     this.ctx.lineWidth = oldWidth;
