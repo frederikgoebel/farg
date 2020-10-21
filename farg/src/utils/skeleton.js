@@ -43,6 +43,9 @@ function scaleOutwards(poseDict, nose) {
     if (poseDict["nose"]) {
       let new_norm_v = new Vector2(norm_v.y, -norm_v.x).multiplyScalar(eyeDistance * 6)
       outDict["nose"].add(new_norm_v);
+    } else {
+      let new_norm_v = new Vector2(norm_v.y, -norm_v.x).multiplyScalar(eyeDistance * 8)
+      outDict["nose"] = new_norm_v;
     }
   }
 
@@ -158,7 +161,7 @@ class Shapeshifter {
       point.v = new Vector2(0, 0);
     })
   }
-  tick(keypoints) {
+  tick(keypoints, frame) {
 
     let newPoints = [];
     this.defaultPoints.forEach((p) => {
@@ -188,15 +191,15 @@ class Shapeshifter {
       let newPoint = new Vector2(this.shape[i].x, this.shape[i].y)
       newPoints[i].sub(newPoint)
       this.shape[i].v.add(newPoints[i].multiplyScalar(this.speed))
-
     }
 
     this.shape.forEach((point) => {
       point.x += point.v.x
       point.y += point.v.y
-
       point.v.multiplyScalar(this.damp)
     })
+
+
   }
 }
 

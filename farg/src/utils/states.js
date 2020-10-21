@@ -30,6 +30,7 @@ class Idle {
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
+    this.shapeshifter.tick(pose.keypoints)
 
     drawCtx.save();
     drawPathShape(drawCtx, this.shapeshifter.shape)
@@ -39,8 +40,6 @@ class Idle {
 
     // collisionBody.debugDraw(drawCtx);
     drawKeypoints(pose.keypoints, 0.6, drawCtx);
-
-    this.shapeshifter.tick(pose.keypoints, drawCtx)
 
     drawCtx.save();
     drawCtx.lineWidth = 20;
@@ -56,12 +55,12 @@ class Idle {
     drawCtx.strokeStyle = "blue";
     drawCtx.stroke();
 
-    drawCtx.translate(2, 4);
+    drawCtx.translate(-3, 4);
     drawPathShape(drawCtx, this.shapeshifter.shape)
     drawCtx.strokeStyle = "green";
     drawCtx.stroke();
 
-    drawCtx.translate(-4, -2);
+    drawCtx.translate(-4, -6);
     drawPathShape(drawCtx, this.shapeshifter.shape)
     drawCtx.strokeStyle = "cyan";
     drawCtx.stroke();
