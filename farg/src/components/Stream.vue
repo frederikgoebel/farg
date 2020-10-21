@@ -3,12 +3,12 @@
   <Mirror key="mirror" @swatchAdded="addSwatch" />
   <div key="loadingMsg" v-if="isLoading">Loading ...</div>
   <div v-else v-for="(swatch, swatchIndex) in swatchesToShow" :key="`swatch-${swatchIndex}`" @click="selectSwatch(swatchIndex)" class="color-column" :class="{squash: preview, large: selectedSwatch==swatchIndex}">
-    <div v-for=" (color, colorIndex) in swatch" :key="`color-${colorIndex}`" class="color-field" :style="{background:  color}">
+    <div v-for=" (color, colorIndex) in swatch.colors" :key="`color-${colorIndex}`" class="color-field" :style="{background:  color}">
       <div :class="{hidden: selectedSwatch!=swatchIndex}" class="color-info" :style="{color: invertColor(rgbaToHex(color),true)}">
         {{rgbaToHex(color)}}
       </div>
     </div>
-    <div v-if="!preview" class="swatch-info">Yesterday</div>
+    <div v-if="!preview" class="swatch-info">{{toRelativeTime(swatch.creationDate)}}</div>
   </div>
   <div key="imageLoader" id="image-loader" style="display: none;"> </div>
 </transition-group>
@@ -18,7 +18,12 @@
 import axios from 'axios';
 import Mirror from './Mirror'
 import { rgbaToHex, invertColor } from '../utils/invertColor';
+import TimeAgo from 'javascript-time-ago'
+import en from 'javascript-time-ago/locale/en'
 
+TimeAgo.addDefaultLocale(en)
+
+const timeAgo = new TimeAgo()
 
 export default {
   data: () => ({
@@ -44,6 +49,9 @@ export default {
   methods: {
     rgbaToHex,
     invertColor,
+    toRelativeTime(time) {
+      return timeAgo.format(new Date(time), 'twitter-minute-now') + " ago" // TODO how to make this reactive
+    },
     selectSwatch(index) {
       if (index == this.selectedSwatch)
         this.selectedSwatch = null;
@@ -51,7 +59,11 @@ export default {
         this.selectedSwatch = index;
     },
     addSwatch(swatch) {
-      this.swatches.push(swatch);
+      swatch.forEach((color, index) => {
+        swatch[index] = this.rgbaToHex(color)
+      })
+
+      // this.swatches.push(swatch);
 
       axios.post(process.env.VUE_APP_API_SERVER + '/' + this.streamID + '/swatches', {
         colors: swatch,
@@ -73,7 +85,7 @@ export default {
     this.isLoading = true;
     axios.get(process.env.VUE_APP_API_SERVER + '/' + this.streamID + '/swatches')
       .then(response => {
-        this.swatches = response.data.colors;
+        this.swatches = response.data.swatches;
         if (this.swatches == null)
           this.swatches = []
         this.isLoading = false

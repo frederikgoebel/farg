@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"time"
 
 	"github.com/frederikgoebel/farg/fargpalett/rt"
 
@@ -22,7 +24,7 @@ var createColorTable = `
 	`
 
 var createSwatchTable = `
-  	CREATE TABLE IF NOT EXISTS swatches (id INTEGER PRIMARY KEY, stream_id TEXT);
+  	CREATE TABLE IF NOT EXISTS swatches (id INTEGER PRIMARY KEY, stream_id TEXT, creation_date DATE DEFAULT (datetime('now')));
   	`
 
 var insertColor = `
@@ -34,7 +36,7 @@ var insertSwatch = `
       	`
 
 var getSwatchID = `
-      	SELECT id FROM swatches WHERE stream_id = ?;
+      	SELECT id, creation_date FROM swatches WHERE stream_id = ?;
               	`
 
 var getColorsForSwatch = `
@@ -69,14 +71,17 @@ func main() {
 
 	router := mux.NewRouter().StrictSlash(false)
 	router.Handle("/ws", rt.HandleWebsocket(hub))
-	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, CORS(Preflight()))).Methods("OPTIONS")
-	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, CORS(postSwatch(db, hub)))).Methods("POST")
-	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, CORS(getStream(db)))).Methods("GET")
+	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, postSwatch(db, hub))).Methods("POST")
+	router.Handle("/{stream}/swatches", handlers.LoggingHandler(loggerOut, getStream(db))).Methods("GET")
 	router.PathPrefix("/").Handler(fs)
+
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
+	originsOk := handlers.AllowedOrigins([]string{"http://farg.app", "http://www.farg.app", "http://dev.farg.app", "http://localhost:8080"}) // TOOD localhost should not be set. load from config
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
 	server := &http.Server{
 		Addr:    *port,
-		Handler: router,
+		Handler: handlers.CORS(originsOk, headersOk, methodsOk)(router),
 	}
 
 	log.Println("Listen and serve on " + *port)
@@ -84,24 +89,78 @@ func main() {
 
 }
 
-func Preflight() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-}
-
-func CORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-		next.ServeHTTP(w, r)
-	})
-}
-
 // Swatch represents the json body of a new color swatch
 type Swatch struct {
-	Colors []string `json:"colors"`
+	Colors       []string  `json:"colors"`
+	CreationDate time.Time `json:"-"`
+}
+
+func (d Swatch) MarshalJSON() ([]byte, error) {
+	type Alias Swatch
+	return json.Marshal(&struct {
+		Alias
+		CreationDate string `json:"creationDate"`
+	}{
+		Alias:        (Alias)(d),
+		CreationDate: d.CreationDate.Format(time.RFC3339),
+	})
+}
+
+func isHex(s string) bool {
+	isHex, _ := regexp.MatchString("^#(?:[0-9a-fA-F]{3}){1,2}$", s)
+	return isHex
+}
+
+// /*
+// function rgbaToHex(rgb) {
+//   if (rgb.indexOf('rgb') == -1) // there might be hex colors already
+//     return rgb
+//
+//   rgb = rgb.substr(5).split(")")[0].split(',');
+//
+//   let r = (+rgb[0]).toString(16),
+//     g = (+rgb[1]).toString(16),
+//     b = (+rgb[2]).toString(16);
+//
+//   if (r.length == 1)
+//     r = "0" + r;
+// //   if (g.length == 1)
+// //     g = "0" + g;
+// //   if (b.length == 1)
+// //     b = "0" + b;
+// //
+// //   return "#" + r + g + b;
+// // }
+// // */
+// //
+// func rgbaToHex(rgb string) (string, error) {
+// 	if len(rgb) < 5 {
+// 		return "", errors.New("Not a rgb[a] string")
+// 	}
+//
+// 	var parts []string
+// 	if rgb[0:3] == "rgb" {
+// 		parts = strings.split(rgb[4:], ",")
+// 	} else if rgb[0:4] == "rgba" {
+// 		parts = strings.split(rgb[5:], ",")
+// 	} else {
+// 		return "", errors.New("Not a rgb[a] string")
+// 	}
+//
+// 		r := parts[0]
+//
+// }
+
+func (s *Swatch) Validate() string {
+	if len(s.Colors) != 6 {
+		return "Wrong swatch length"
+	}
+	for _, color := range s.Colors {
+		if !isHex(color) {
+			return "Not hex"
+		}
+	}
+	return ""
 }
 
 func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
@@ -112,6 +171,12 @@ func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
 		if err := decoder.Decode(&swatch); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprint(w, "Invalid json") // todo proper error handling
+			return
+		}
+
+		if validation := swatch.Validate(); validation != "" {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprint(w, validation)
 			return
 		}
 
@@ -155,7 +220,7 @@ func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
 }
 
 type Stream struct {
-	Colors [][]string `json:"colors"`
+	Colors []Swatch `json:"swatches"`
 }
 
 func getStream(db *sql.DB) http.Handler {
@@ -177,7 +242,8 @@ func getStream(db *sql.DB) http.Handler {
 		var stream Stream
 		for swatchRows.Next() {
 			var swatchID string
-			swatchRows.Scan(&swatchID)
+			var creationTime time.Time
+			swatchRows.Scan(&swatchID, &creationTime)
 			rows, err := tx.Query(getColorsForSwatch, swatchID)
 			if err != nil {
 				log.Print(err)
@@ -185,11 +251,14 @@ func getStream(db *sql.DB) http.Handler {
 				return
 			}
 
-			var swatch []string
+			swatch := Swatch{
+				CreationDate: creationTime,
+			}
+
 			for rows.Next() {
 				var color string
 				rows.Scan(&color)
-				swatch = append(swatch, color)
+				swatch.Colors = append(swatch.Colors, color)
 			}
 			stream.Colors = append(stream.Colors, swatch)
 		}

@@ -57,9 +57,6 @@ class Idle {
 
     drawCtx.restore()
 
-    console.log(pose)
-    console.log(poseDict)
-
     let allIn = true;
     usedKeyPointParts.forEach(part => {
       if (poseDict[part] == undefined)
