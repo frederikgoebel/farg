@@ -140,6 +140,15 @@ class HighlightPaletteAnimation implements Animation {
   }
 
   draw = (x: number) => {
+    if (this.animation.temporary) {
+      this.ctx.fillStyle = this.animation.swatch.prominentColor;
+      this.ctx.fillRect(
+        this.animation.topLeft.x + x,
+        this.animation.topLeft.y,
+        this.animation.boxSize,
+        this.animation.boxSize
+      )
+    }
     const oldWidth = this.ctx.lineWidth;
     this.ctx.lineWidth = 5;
     this.ctx.strokeRect(
@@ -184,6 +193,9 @@ class HighlightPaletteAnimation implements Animation {
       this.draw(x);
     }
 
+    if (this.elapsedTime >= this.totalDuration) {
+      this.animation.temporary = true;
+    }
     return this.elapsedTime >= this.totalDuration;
   };
 
