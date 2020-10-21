@@ -92,15 +92,24 @@ const interpolate = (
   return denormalize(result, range.from, range.to);
 };
 
+type HighlightPaletteAnimationConfig = {
+  animation: PaletteAnimation;
+  duration: number;
+  blinkPercentage: number;
+  easingFunction?: (x: number) => number;
+};
+
 class HighlightPaletteAnimation implements Animation {
   animation: PaletteAnimation;
   ctx: CanvasRenderingContext2D;
   LoopCount = 2;
-  duration: number;
-  elapsedTime = 0;
 
-  currentIndex = 0;
+  cycleDuration: number;
+  totalDuration: number;
   finalIndex: number;
+
+  elapsedTime = 0;
+  currentIndex = 0;
 
   temporary = false;
 
@@ -108,12 +117,16 @@ class HighlightPaletteAnimation implements Animation {
 
   easingFunction: (x: number) => number;
 
-  constructor(
-    animation: PaletteAnimation,
-    duration: number,
-    easingFunction?: (x: number) => number
-  ) {
+  constructor({
+    animation,
+    duration,
+    blinkPercentage = 20,
+    easingFunction
+  }: HighlightPaletteAnimationConfig) {
     this.animation = animation;
+    this.totalDuration = duration;
+    this.cycleDuration = duration * (1 - blinkPercentage / 100);
+
     const prominentIndex = animation.swatch.palette.findIndex(
       color => color === animation.swatch.prominentColor
     );
@@ -122,33 +135,50 @@ class HighlightPaletteAnimation implements Animation {
 
     this.easingFunction = easingFunction ?? ((t: number) => t);
     this.ctx = animation.ctx;
-    this.duration = duration;
   }
+
+  draw = (x: number) => {
+    this.ctx.strokeStyle = "green";
+    this.ctx.strokeRect(
+      this.animation.topLeft.x + x,
+      this.animation.topLeft.y,
+      this.animation.boxSize,
+      this.animation.boxSize
+    );
+  };
 
   update = (deltaTime: number) => {
     if (!deltaTime || deltaTime === 0) return false;
 
     if (!this.animation.update(deltaTime)) return false;
 
-    this.elapsedTime = Math.min(this.elapsedTime + deltaTime, this.duration);
+    this.elapsedTime = Math.min(
+      this.elapsedTime + deltaTime,
+      this.totalDuration
+    );
 
-    const t = this.elapsedTime / this.duration;
+    const t = this.elapsedTime / this.cycleDuration;
     this.currentIndex = Math.round(this.easingFunction(t) * this.finalIndex);
     const highlightIndex =
       this.currentIndex % this.animation.swatch.palette.length;
 
     const x = highlightIndex * this.animation.boxSize;
-    const topLeft = this.animation.topLeft;
 
-    this.ctx.strokeStyle = "green";
-    this.ctx.strokeRect(
-      topLeft.x + x,
-      topLeft.y,
-      this.animation.boxSize,
-      this.animation.boxSize
-    );
+    // Blink
+    if (
+      this.cycleDuration <= this.elapsedTime &&
+      this.elapsedTime <= this.totalDuration
+    ) {
+      const oldOpacity = this.ctx.globalAlpha;
 
-    return this.elapsedTime >= this.duration;
+      this.ctx.globalAlpha = 1 - (this.elapsedTime % 101) / 100;
+      this.draw(x);
+      this.ctx.globalAlpha = oldOpacity;
+    } else {
+      this.draw(x);
+    }
+
+    return this.elapsedTime >= this.totalDuration;
   };
 }
 
@@ -268,8 +298,5 @@ export const easing = {
   easeOutCubic: (t: number) => --t * t * t + 1
 };
 
-export const highlightPalette = (
-  animation: PaletteAnimation,
-  duration: number,
-  easingFunction?: (x: number) => number
-) => new HighlightPaletteAnimation(animation, duration, easingFunction);
+export const highlightPalette = (config: HighlightPaletteAnimationConfig) =>
+  new HighlightPaletteAnimation(config);

@@ -219,15 +219,10 @@ class ColorSteal {
         getFeetBB(keypoints)
       ];
 
-      const hairOverlap =
-        this.boundingBoxes[0].endY - this.boundingBoxes[1].startY;
+      const margin = 32;
 
-      if (hairOverlap > 0) {
-        const margin = 14;
-
-        this.boundingBoxes[0].startY -= hairOverlap + margin;
-        this.boundingBoxes[0].endY -= hairOverlap + margin;
-      }
+      this.boundingBoxes[0].startY -= margin;
+      this.boundingBoxes[0].endY -= margin;
 
       drawCtx.lineWidth = 1;
       drawCtx.strokeStyle = "white";
@@ -283,7 +278,12 @@ class ColorSteal {
             duration: DURATION_MS
           });
 
-          return highlightPalette(animation, 3000, easing.easeOutCubic);
+          return highlightPalette({
+            animation,
+            duration: 5000,
+            blinkPercentage: 20,
+            easingFunction: easing.easeOutCubic
+          });
         }
       );
 
