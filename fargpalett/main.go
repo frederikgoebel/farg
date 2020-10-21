@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"time"
 
 	"github.com/frederikgoebel/farg/fargpalett/rt"
 
@@ -23,7 +24,7 @@ var createColorTable = `
 	`
 
 var createSwatchTable = `
-  	CREATE TABLE IF NOT EXISTS swatches (id INTEGER PRIMARY KEY, stream_id TEXT);
+  	CREATE TABLE IF NOT EXISTS swatches (id INTEGER PRIMARY KEY, stream_id TEXT, creation_date DATE DEFAULT (datetime('now')));
   	`
 
 var insertColor = `
@@ -35,7 +36,7 @@ var insertSwatch = `
       	`
 
 var getSwatchID = `
-      	SELECT id FROM swatches WHERE stream_id = ?;
+      	SELECT id, creation_date FROM swatches WHERE stream_id = ?;
               	`
 
 var getColorsForSwatch = `
@@ -90,7 +91,19 @@ func main() {
 
 // Swatch represents the json body of a new color swatch
 type Swatch struct {
-	Colors []string `json:"colors"`
+	Colors       []string  `json:"colors"`
+	CreationDate time.Time `json:"-"`
+}
+
+func (d Swatch) MarshalJSON() ([]byte, error) {
+	type Alias Swatch
+	return json.Marshal(&struct {
+		Alias
+		CreationDate string `json:"creationDate"`
+	}{
+		Alias:        (Alias)(d),
+		CreationDate: d.CreationDate.Format(time.RFC3339),
+	})
 }
 
 func isHex(s string) bool {
@@ -207,7 +220,7 @@ func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
 }
 
 type Stream struct {
-	Colors [][]string `json:"colors"`
+	Colors []Swatch `json:"swatches"`
 }
 
 func getStream(db *sql.DB) http.Handler {
@@ -229,7 +242,8 @@ func getStream(db *sql.DB) http.Handler {
 		var stream Stream
 		for swatchRows.Next() {
 			var swatchID string
-			swatchRows.Scan(&swatchID)
+			var creationTime time.Time
+			swatchRows.Scan(&swatchID, &creationTime)
 			rows, err := tx.Query(getColorsForSwatch, swatchID)
 			if err != nil {
 				log.Print(err)
@@ -237,11 +251,14 @@ func getStream(db *sql.DB) http.Handler {
 				return
 			}
 
-			var swatch []string
+			swatch := Swatch{
+				CreationDate: creationTime,
+			}
+
 			for rows.Next() {
 				var color string
 				rows.Scan(&color)
-				swatch = append(swatch, color)
+				swatch.Colors = append(swatch.Colors, color)
 			}
 			stream.Colors = append(stream.Colors, swatch)
 		}
