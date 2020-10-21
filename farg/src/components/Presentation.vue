@@ -1,7 +1,6 @@
 <template>
 <div class="item-100 container presentation-frame">
   <div class="feature-stream">
-    <Mirror @swatchAdded="addSwatch" />
     <Stream streamID="debug" preview />
   </div>
 </div>

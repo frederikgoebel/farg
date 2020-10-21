@@ -24,8 +24,11 @@
       </a>
     </div>
     <div class="container center createdContainer pt-32 ">
-      <a href="mailto:gobelf@student.chalmers.se">
+      <a href="mailto:gobelf@student.chalmers.se" class="pr-32">
         <img class="mail-icon" src="../assets/icons/mail.png" alt="Mail icon" />
+      </a>
+      <a target="_blank" href="https://github.com/frederikgoebel/farg">
+        <img class="mail-icon" src="../assets/icons/GitHub-Mark-Light-64px.png" alt="Mail icon" />
       </a>
     </div>
   </div>
