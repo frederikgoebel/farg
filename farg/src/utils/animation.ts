@@ -110,6 +110,8 @@ class HighlightPaletteAnimation implements Animation {
 
   elapsedTime = 0;
   currentIndex = 0;
+  boxOpacity = 1;
+  increasingOpacity = false;
 
   temporary = false;
 
@@ -138,7 +140,6 @@ class HighlightPaletteAnimation implements Animation {
   }
 
   draw = (x: number) => {
-    this.ctx.strokeStyle = "green";
     this.ctx.strokeRect(
       this.animation.topLeft.x + x,
       this.animation.topLeft.y,
@@ -171,7 +172,9 @@ class HighlightPaletteAnimation implements Animation {
     ) {
       const oldOpacity = this.ctx.globalAlpha;
 
-      this.ctx.globalAlpha = 1 - (this.elapsedTime % 101) / 100;
+      this.updateOpacity(deltaTime);
+
+      this.ctx.globalAlpha = this.boxOpacity;
       this.draw(x);
       this.ctx.globalAlpha = oldOpacity;
     } else {
@@ -179,6 +182,25 @@ class HighlightPaletteAnimation implements Animation {
     }
 
     return this.elapsedTime >= this.totalDuration;
+  };
+
+  updateOpacity = (deltaTime: number) => {
+    const deltaOpacity = deltaTime / 6;
+    if (this.increasingOpacity) {
+      this.boxOpacity += deltaOpacity;
+
+      if (this.boxOpacity > 1) {
+        this.boxOpacity = 1;
+        this.increasingOpacity = false;
+      }
+    } else {
+      this.boxOpacity += deltaOpacity;
+
+      if (this.boxOpacity < 0) {
+        this.boxOpacity = 0;
+        this.increasingOpacity = true;
+      }
+    }
   };
 }
 
