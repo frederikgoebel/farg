@@ -117,7 +117,8 @@ class HighlightPaletteAnimation implements Animation {
     const prominentIndex = animation.swatch.palette.findIndex(
       color => color === animation.swatch.prominentColor
     );
-    this.finalIndex = this.LoopCount * 2 + prominentIndex;
+    this.finalIndex =
+      this.LoopCount * animation.swatch.palette.length + prominentIndex;
 
     this.easingFunction = easingFunction ?? ((t: number) => t);
     this.ctx = animation.ctx;

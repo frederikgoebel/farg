@@ -28,7 +28,8 @@ import {
   LineAnimation,
   PaletteAnimation,
   Animation,
-  highlightPalette
+  highlightPalette,
+  easing
 } from "./animation";
 
 const frontColor = "#F7566A";
@@ -272,7 +273,7 @@ class ColorSteal {
             duration: DURATION_MS
           });
 
-          return highlightPalette(animation, 3000);
+          return highlightPalette(animation, 3000, easing.easeOutCubic);
         }
       );
 
