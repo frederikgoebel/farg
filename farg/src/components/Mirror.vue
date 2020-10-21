@@ -1,9 +1,6 @@
 <template>
 <div class="mirror">
-  <TitleCard>
-    <b>{{callout}}</b>
-  </TitleCard>
-
+  <div class="callout">{{callout}}</div>
   <canvas class="canvas" ref="canvas"></canvas>
   <video ref="video" playsinline autoplay style="display: none;"> </video>
   <canvas ref="videoBuffer" style="display: none;"></canvas>
@@ -81,10 +78,17 @@ export default {
 </script>
 
 <style>
+.callout {
+  font-size: 3rem;
+  text-align: center;
+  background: white;
+  color: black;
+  height: 10%;
+}
+
 .mirror {
   display: block;
   align-items: stretch;
-  height: 100%;
   width: 25%;
   flex-grow: 1;
   flex-shrink: 0;
@@ -92,6 +96,6 @@ export default {
 
 .canvas {
   width: 100%;
-  height: 100%;
+  height: 90%;
 }
 </style>

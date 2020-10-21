@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import { saveVideoToBuffer, CollisionBody, getPose, drawKeypoints, } from "./mirror";
+import { saveVideoToBuffer, CollisionBody, getPose, drawKeypoints, usedKeyPointParts } from "./mirror";
 
 import { Shapeshifter, toPoseDict } from './skeleton'
 import drawPathShape from './blob'
@@ -15,18 +15,9 @@ class Idle {
     this.perfectTime = 0;
   }
   async tick(drawCtx, video, videoBuffer, posenet, dt) {
-    let collisionBody = new CollisionBody(
-      {
-        x: 20,
-        y: 0,
-      },
-      drawCtx.canvas.height / 280
-    );
-
     saveVideoToBuffer(video, videoBuffer);
     let pose = await getPose(posenet, videoBuffer.canvas);
     let poseDict = toPoseDict(pose.keypoints)
-    let allIn = collisionBody.colliding(pose);
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
@@ -65,11 +56,19 @@ class Idle {
     console.log(pose)
     console.log(poseDict)
 
+    let allIn = true;
+    usedKeyPointParts.forEach(part => {
+      if (poseDict[part] == undefined)
+        allIn = false;
+    })
+
     if ((poseDict["leftEye"] == undefined) || (poseDict["leftAnkle"] == undefined)) {
       this.setTextCallback("Go further away!")
-    } else {
+    } else if (allIn) {
       this.perfectTime += dt;
       this.setTextCallback("Perfect stay like this.")
+    } else {
+      this.setTextCallback("Searching for some bones..")
     }
 
     if (this.perfectTime > 3000) {

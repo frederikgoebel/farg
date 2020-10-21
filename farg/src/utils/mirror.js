@@ -166,4 +166,4 @@ for (let i = 0; i < numbers.length; i += 2) {
   });
 }
 
-export { setupCamera, destructCamera, setupVideoBuffer, saveVideoToBuffer, getPose, CollisionBody, drawKeypoints, };
+export { setupCamera, destructCamera, setupVideoBuffer, saveVideoToBuffer, getPose, CollisionBody, drawKeypoints, usedKeyPointParts };
