@@ -12,7 +12,9 @@ function toPoseDict(keypoints) {
 }
 
 
-function debugLine(p0, p1) {
+function debugLine(p0, p1, ctx) {
+  if (!(p0 && p1))
+    return
   ctx.save()
   ctx.beginPath();
   ctx.moveTo(p0.x, p0.y);
@@ -49,14 +51,14 @@ function drawEyeLine(poseDict, nose, ctx) {
     let v = poseDict["leftEye"].clone().sub(poseDict["rightEye"]);
     let norm_v = v.clone().normalize();
     let eyeDistance = v.length();
-    let scaleVec = norm_v.clone().multiplyScalar(eyeDistance);
+    let scaleVec = norm_v.clone().multiplyScalar(eyeDistance * 2);
 
-    outDict["leftEye"].add(scaleVec);
-    outDict["rightEye"].add(scaleVec.negate());
+    // outDict["leftEye"].add(scaleVec);
+    // outDict["rightEye"].add(scaleVec.negate());
 
 
     if (poseDict["nose"]) {
-      let new_norm_v = new Vector2(norm_v.y, -norm_v.x).multiplyScalar(eyeDistance * 3)
+      let new_norm_v = new Vector2(norm_v.y, -norm_v.x).multiplyScalar(eyeDistance * 6)
       outDict["nose"].add(new_norm_v);
     }
   }
@@ -71,31 +73,26 @@ function drawEyeLine(poseDict, nose, ctx) {
     outDict["rightShoulder"].add(scaleVec.negate());
   }
 
-  if (poseDict["leftShoulder"] && poseDict["leftElbow"]) {
-    let v = poseDict["leftShoulder"].clone().sub(poseDict["leftElbow"]);
-    let norm_v = v.clone().normalize();
-    let scale = v.length();
-
-    let scaleVec = v.clone().multiplyScalar(0.7);
-    outDict["leftElbow"].add(scaleVec);
-  }
 
   if (poseDict["rightShoulder"] && poseDict["rightElbow"]) {
     let v = poseDict["rightShoulder"].clone().sub(poseDict["rightElbow"]);
-    let norm_v = v.clone().normalize();
-    let scale = v.length();
-
-    let scaleVec = v.clone().multiplyScalar(0.7);
-    outDict["rightElbow"].add(scaleVec);
+    outDict["rightElbow"].add(new Vector2(v.y, -v.x).multiplyScalar(0.5));
   }
 
   if (poseDict["rightElbow"] && poseDict["rightWrist"]) {
     let v = poseDict["rightElbow"].clone().sub(poseDict["rightWrist"]);
-    let norm_v = v.clone().normalize();
-    let scale = v.length();
+    outDict["rightWrist"].add(v.multiplyScalar(0.7).negate());
+  }
 
-    let scaleVec = v.clone().multiplyScalar(0);
-    outDict["rightWrist"].add(scaleVec);
+
+  if (poseDict["leftShoulder"] && poseDict["leftElbow"]) {
+    let v = poseDict["leftShoulder"].clone().sub(poseDict["leftElbow"]);
+    outDict["leftElbow"].add(new Vector2(v.y, -v.x).multiplyScalar(0.5).negate());
+  }
+
+  if (poseDict["leftElbow"] && poseDict["leftWrist"]) {
+    let v = poseDict["leftElbow"].clone().sub(poseDict["leftWrist"]);
+    outDict["leftWrist"].add(v.multiplyScalar(0.7).negate());
   }
 
   if (poseDict["leftElbow"] && poseDict["leftWrist"]) {
@@ -142,12 +139,28 @@ function pointsOnCircle(n, center, radius) {
 }
 
 
+function debugSkeleton(poseDict, ctx) {
+
+  // debugLine(poseDict["rightEye"], poseDict["leftEye"], ctx)
+  debugLine(poseDict["rightShoulder"], poseDict["leftShoulder"], ctx)
+
+  debugLine(poseDict["rightShoulder"], poseDict["rightElbow"], ctx)
+  debugLine(poseDict["rightElbow"], poseDict["rightWrist"], ctx)
+  //
+  // debugLine(poseDict["leftShoulder"], poseDict["leftElbow"], ctx)
+  // debugLine(poseDict["leftElbow"], poseDict["leftWrist"], ctx)
+
+
+
+}
+
+
 
 class Shapeshifter {
   constructor(position) {
     this.speed = 0.1
     this.damp = 0.8
-    this.blob = new Blob(pointsOnCircle(11, position, 40));
+    this.blob = new Blob(pointsOnCircle(9, position, 40));
     this.blob.points.forEach((point) => {
       point.v = new Vector2(0, 0);
     })
@@ -157,7 +170,7 @@ class Shapeshifter {
 
     // TODO poseDict2points that fills missing poseDict values with approciamations
     let newPoints = [
-      poseDict["rightEye"] || new Vector2(10, 10),
+      // poseDict["rightEye"] || new Vector2(10, 10),
       poseDict["rightShoulder"] || new Vector2(10, 10),
       poseDict["rightElbow"] || new Vector2(10, 10),
       poseDict["rightWrist"] || new Vector2(10, 10),
@@ -166,9 +179,10 @@ class Shapeshifter {
       poseDict["leftWrist"] || new Vector2(10, 10),
       poseDict["leftElbow"] || new Vector2(10, 10),
       poseDict["leftShoulder"] || new Vector2(10, 10),
-      poseDict["leftEye"] || new Vector2(10, 10),
+      // poseDict["leftEye"] || new Vector2(10, 10),
       poseDict["nose"] || new Vector2(10, 10),
     ]
+    debugSkeleton(poseDict, ctx)
     console.log(poseDict)
     if (newPoints.length != this.blob.points.length)
       console.log("Length of points not equal", newPoints.length, this.blob.points.length)
@@ -207,6 +221,7 @@ class Shapeshifter {
       x: 2,
       y: 5
     }, "lighter")
+
 
   }
 }
