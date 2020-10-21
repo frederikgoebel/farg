@@ -68,7 +68,9 @@ export default {
     })
     .catch(err => {
       console.log(err);
-      window.requestAnimationFrame(this.draw);
+      if (__DEBUG_MODE) {
+        window.requestAnimationFrame(this.draw);
+      }
     }
       )
   },
