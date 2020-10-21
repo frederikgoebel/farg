@@ -1,21 +1,20 @@
 import gsap from "gsap";
-import { saveVideoToBuffer, drawBody, CollisionBody, getPose, drawKeypoints, } from "./mirror";
+import { saveVideoToBuffer, CollisionBody, getPose, drawKeypoints, } from "./mirror";
 
-import { Shapeshifter } from './skeleton'
+import { Shapeshifter, toPoseDict } from './skeleton'
 import drawPathShape from './blob'
 import pixelator, { generateSwatches } from "./pixelator";
 
-const frontColor = "#F7566A";
-const backColor = "#023F92";
-
 class Idle {
-  constructor() {
+  constructor(setTextCallback) {
     this.shapeshifter = new Shapeshifter({
       x: 200,
       y: 400
-    })
+    });
+    this.setTextCallback = setTextCallback;
+    this.perfectTime = 0;
   }
-  async tick(drawCtx, video, videoBuffer, posenet) {
+  async tick(drawCtx, video, videoBuffer, posenet, dt) {
     let collisionBody = new CollisionBody(
       {
         x: 20,
@@ -26,11 +25,12 @@ class Idle {
 
     saveVideoToBuffer(video, videoBuffer);
     let pose = await getPose(posenet, videoBuffer.canvas);
+    let poseDict = toPoseDict(pose.keypoints)
     let allIn = collisionBody.colliding(pose);
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
-    this.shapeshifter.tick(pose.keypoints)
+    this.shapeshifter.tick(poseDict)
 
     drawCtx.save();
     drawPathShape(drawCtx, this.shapeshifter.shape)
@@ -60,12 +60,23 @@ class Idle {
     drawCtx.strokeStyle = "#E864FF";
     drawCtx.stroke();
 
-
     drawCtx.restore()
 
+    console.log(pose)
+    console.log(poseDict)
 
-    if (allIn)
-      return "idle"
+    if ((poseDict["leftEye"] == undefined) || (poseDict["leftAnkle"] == undefined)) {
+      this.setTextCallback("Go further away!")
+    } else {
+      this.perfectTime += dt;
+      this.setTextCallback("Perfect stay like this.")
+    }
+
+    if (this.perfectTime > 3000) {
+      this.perfectTime = 0;
+      return "flash"
+    }
+
     return "idle"
   }
 }
@@ -102,11 +113,6 @@ class Found {
     let allIn = collisionBody.colliding(pose);
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
-
-    drawCtx.rect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
-    drawCtx.fillStyle = backColor;
-    drawCtx.fill();
-
     drawCtx.drawImage(videoBuffer.canvas, 0, 0);
 
     collisionBody.debugDraw(drawCtx);

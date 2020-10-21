@@ -2,9 +2,9 @@
 <div class="item-100 container">
   <div class="feature-stream lower-line">
     <Stream streamID="debug" />
-    <TitleCard>
+    <!-- <TitleCard>
       <BlinkyDot />Live from <b>Visual Arena</b>
-    </TitleCard>
+    </TitleCard> -->
   </div>
 </div>
 

@@ -1,5 +1,4 @@
 import { Vector2 } from 'three';
-import drawPathShape from './blob'
 import SimplexNoise from 'simplex-noise'
 
 function toPoseDict(keypoints) {
@@ -24,7 +23,7 @@ function debugLine(p0, p1, ctx) {
 }
 
 // scaleOutwards moves certain keypoints out of the body to describe an outer shape
-function scaleOutwards(poseDict, nose) {
+function scaleOutwards(poseDict) {
 
   let outDict = {}
   for (const [key, value] of Object.entries(poseDict)) {
@@ -51,9 +50,6 @@ function scaleOutwards(poseDict, nose) {
 
   if (poseDict["leftShoulder"] && poseDict["rightShoulder"]) {
     let v = poseDict["leftShoulder"].clone().sub(poseDict["rightShoulder"]);
-    let norm_v = v.clone().normalize();
-    let scale = v.length();
-
     let scaleVec = v.clone().multiplyScalar(0.7);
     outDict["leftShoulder"].add(scaleVec);
     outDict["rightShoulder"].add(scaleVec.negate());
@@ -83,26 +79,18 @@ function scaleOutwards(poseDict, nose) {
 
   if (poseDict["leftElbow"] && poseDict["leftWrist"]) {
     let v = poseDict["leftElbow"].clone().sub(poseDict["leftWrist"]);
-    let norm_v = v.clone().normalize();
-    let scale = v.length();
-
     let scaleVec = v.clone().multiplyScalar(0);
     outDict["leftWrist"].add(scaleVec);
   }
 
   if (poseDict["leftKnee"] && poseDict["leftAnkle"]) {
     let v = poseDict["leftKnee"].clone().sub(poseDict["leftAnkle"]);
-    let norm_v = v.clone().normalize();
-    let scale = v.length();
 
     let scaleVec = v.clone().multiplyScalar(1.5).negate();
-    ;
     outDict["leftAnkle"].add(scaleVec);
   }
   if (poseDict["rightKnee"] && poseDict["rightAnkle"]) {
     let v = poseDict["rightKnee"].clone().sub(poseDict["rightAnkle"]);
-    let norm_v = v.clone().normalize();
-    let scale = v.length();
 
     let scaleVec = v.clone().multiplyScalar(1.5).negate();
     outDict["rightAnkle"].add(scaleVec);
@@ -114,25 +102,29 @@ function scaleOutwards(poseDict, nose) {
 
 // fillApproximations tries to fill all skeleton points with sensible defaults based on some valid values
 function fillApproximations(poseDict) {
+  let outDict = {}
+  for (const [key, value] of Object.entries(poseDict)) {
+    outDict[key] = new Vector2(value.x, value.y);
+  }
 
   if (!(poseDict["leftEye"] && poseDict["rightEye"]))
-    return poseDict
+    return outDict
 
   let eyeDistance = poseDict["leftEye"].clone().sub(poseDict["rightEye"]).length();
 
-  poseDict["rightShoulder"] = poseDict["rightShoulder"] || new Vector2(2 * eyeDistance, 2 * eyeDistance).add(poseDict["leftEye"])
-  poseDict["leftShoulder"] = poseDict["leftShoulder"] || new Vector2(-2 * eyeDistance, 2 * eyeDistance).add(poseDict["rightEye"])
+  outDict["rightShoulder"] = poseDict["rightShoulder"] || new Vector2(2 * eyeDistance, 2 * eyeDistance).add(outDict["leftEye"])
+  outDict["leftShoulder"] = poseDict["leftShoulder"] || new Vector2(-2 * eyeDistance, 2 * eyeDistance).add(outDict["rightEye"])
 
-  poseDict["rightElbow"] = poseDict["rightElbow"] || new Vector2(eyeDistance, 5 * eyeDistance).add(poseDict["rightShoulder"])
-  poseDict["leftElbow"] = poseDict["leftElbow"] || new Vector2(-eyeDistance, 5 * eyeDistance).add(poseDict["leftShoulder"])
+  outDict["rightElbow"] = poseDict["rightElbow"] || new Vector2(eyeDistance, 5 * eyeDistance).add(outDict["rightShoulder"])
+  outDict["leftElbow"] = poseDict["leftElbow"] || new Vector2(-eyeDistance, 5 * eyeDistance).add(outDict["leftShoulder"])
 
-  poseDict["rightWrist"] = poseDict["rightWrist"] || new Vector2(eyeDistance, 5 * eyeDistance).add(poseDict["rightElbow"])
-  poseDict["leftWrist"] = poseDict["leftWrist"] || new Vector2(-eyeDistance, 5 * eyeDistance).add(poseDict["leftElbow"])
+  outDict["rightWrist"] = poseDict["rightWrist"] || new Vector2(eyeDistance, 5 * eyeDistance).add(outDict["rightElbow"])
+  outDict["leftWrist"] = poseDict["leftWrist"] || new Vector2(-eyeDistance, 5 * eyeDistance).add(outDict["leftElbow"])
 
-  poseDict["rightAnkle"] = poseDict["rightAnkle"] || new Vector2(eyeDistance * 2, 22 * eyeDistance).add(poseDict["rightEye"])
-  poseDict["leftAnkle"] = poseDict["leftAnkle"] || new Vector2(-eyeDistance * 2, 22 * eyeDistance).add(poseDict["leftEye"])
+  outDict["rightAnkle"] = poseDict["rightAnkle"] || new Vector2(eyeDistance * 2, 22 * eyeDistance).add(outDict["rightEye"])
+  outDict["leftAnkle"] = poseDict["leftAnkle"] || new Vector2(-eyeDistance * 2, 22 * eyeDistance).add(outDict["leftEye"])
 
-  return poseDict
+  return outDict
 }
 
 // pointsOnCircle distributes n points around the center with radius distance
@@ -163,14 +155,9 @@ class Shapeshifter {
       point.v = new Vector2(0, 0);
     })
   }
-  tick(keypoints, frame) {
+  tick(poseDict) {
 
     let newPoints = [];
-    this.defaultPoints.forEach((p) => {
-      newPoints.push(new Vector2(p.x + this.simplex.noise2D(p.x, this.time) * 40 - 20, p.y + this.simplex.noise2D(p.y, this.time) * 40 - 20))
-    })
-
-    let poseDict = toPoseDict(keypoints)
     if (poseDict["leftEye"] && poseDict["rightEye"]) {
 
       poseDict = fillApproximations(poseDict)
@@ -187,6 +174,10 @@ class Shapeshifter {
         poseDict["leftShoulder"],
         poseDict["leftElbow"],
       ]
+    } else {
+      this.defaultPoints.forEach((p) => {
+        newPoints.push(new Vector2(p.x + this.simplex.noise2D(p.x, this.time) * 40 - 20, p.y + this.simplex.noise2D(p.y, this.time) * 40 - 20))
+      })
     }
 
     for (let i = 0; i < newPoints.length; i++) {
@@ -205,4 +196,4 @@ class Shapeshifter {
   }
 }
 
-export { Shapeshifter }
+export { Shapeshifter, toPoseDict }

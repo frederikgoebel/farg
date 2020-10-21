@@ -1,6 +1,3 @@
-/* eslint-disable */
-/* eslint-disable no-console */
-/* eslint-disable no-unused-vars */
 import SAT from "sat";
 
 const usedKeyPointParts = new Set([
@@ -14,28 +11,6 @@ const usedKeyPointParts = new Set([
   "rightKnee",
   "leftAnkle",
 ]);
-
-const frontColor = "#F7566A";
-
-function drawFillCentered(src, dst) {
-  var aspect = src.width / src.height;
-  var newHeight;
-  var newWidth;
-  if (dst.canvas.clientHeight > dst.canvas.clientWidth) {
-    newHeight = dst.canvas.clientHeight;
-    newWidth = newHeight * aspect;
-  } else {
-    newWidth = dst.canvas.clientWidth;
-    newHeight = newWidth * aspect;
-  }
-  dst.drawImage(
-    src,
-    -(newWidth - dst.canvas.clientWidth) / 2,
-    -(newHeight - dst.canvas.clientHeight) / 2,
-    newWidth,
-    newHeight
-  );
-}
 
 function drawPoint(ctx, x, y, r, color) {
   ctx.beginPath();
@@ -59,7 +34,6 @@ function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
 
 class CollisionBody {
   constructor(pos, scale) {
-    const h = 200;
     this.circle = new SAT.Circle(
       new SAT.Vector(pos.x + 50 * scale, pos.y + 30 * scale),
       30 * scale
@@ -132,7 +106,6 @@ async function setupCamera(video) {
     );
   }
 
-  let mobile = false;
   console.log(navigator.mediaDevices.getSupportedConstraints());
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: false,
@@ -193,26 +166,4 @@ for (let i = 0; i < numbers.length; i += 2) {
   });
 }
 
-function drawBody(ctx, color) {
-  return;
-  ctx.save();
-  ctx.translate(0, 20);
-  ctx.scale(1.25, 1.0);
-  ctx.beginPath();
-  ctx.moveTo(drawList[0].x, drawList[0].y);
-  drawList.forEach((point) => {
-    ctx.lineTo(point.x, point.y);
-  });
-  ctx.closePath();
-  ctx.save();
-  ctx.clip();
-  ctx.strokeStyle = frontColor;
-  ctx.lineWidth = 4;
-  ctx.stroke();
-  ctx.restore();
-  ctx.restore();
-
-  return;
-}
-
-export { setupCamera, destructCamera, setupVideoBuffer, drawBody, saveVideoToBuffer, getPose, CollisionBody, drawKeypoints, };
+export { setupCamera, destructCamera, setupVideoBuffer, saveVideoToBuffer, getPose, CollisionBody, drawKeypoints, };
