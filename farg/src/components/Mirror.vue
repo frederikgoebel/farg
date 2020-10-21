@@ -42,7 +42,7 @@ export default {
   },
   mounted() {
     this.stateMachine = new StateMachine(this.swatchAdded);
-    mirror.setupCamera(this.$refs.video).then(() => {
+    mirror.setupCamera(this.$refs.video).then((stopFn) => {
       mirror.setupVideoBuffer(this.$refs.videoBuffer, this.$refs.video)
       this.renderLayer = this.$refs.canvas.getContext("2d");
       tf.enableProdMode()
@@ -61,6 +61,9 @@ export default {
         throw (err)
       })
     })
+  },
+  beforeDestroy() {
+    mirror.destructCamera(this.$refs.video);
   },
 }
 </script>
