@@ -299,7 +299,7 @@ class HighlightPaletteAnimation extends BaseAnimation {
   updateAnimation = (deltaTime: number) => {
     if (!deltaTime || deltaTime === 0) return false;
 
-    if (!this.animation.updateAnimation(deltaTime)) return false;
+    if (!this.animation.update(deltaTime)) return false;
 
     this.elapsedTime = Math.min(
       this.elapsedTime + deltaTime,
@@ -341,7 +341,6 @@ class HighlightPaletteAnimation extends BaseAnimation {
   };
 
   draw = () => {
-    this.animation.draw();
     if (!this.animation.isFinished()) return;
 
     if (this.state.state === HighlightPatternState.Focus) {
