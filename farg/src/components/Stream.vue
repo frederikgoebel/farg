@@ -2,8 +2,8 @@
 <transition-group name="stream" tag="div" id="color-stream" class="row">
   <Mirror v-if="showMirror" key="mirror" @swatchAdded="addSwatch" />
   <div key="loadingMsg" v-if="isLoading">Loading ...</div>
-  <div v-else v-for="(swatch, swatchIndex) in swatchesToShow" :key="`swatch-${swatchIndex}`" @click="selectSwatch(swatchIndex)" class="color-column" :class="{squash: preview, large: selectedSwatch==swatchIndex}">
-    <div v-for=" (color, colorIndex) in swatch.colors" :key="`color-${colorIndex}`" class="color-field" :style="{background:  color}">
+  <div v-else v-for="(swatch, swatchIndex) in swatchesToShow" :key="`swatch-${swatchIndex}`" class="color-column" :class="{squash: preview, large: selectedSwatch==swatchIndex}">
+    <div v-for=" (color, colorIndex) in swatch.colors" :key="`color-${colorIndex}`" class="color-field" :style="{background:  color}" @click="selectSwatch(swatchIndex)">
       <div :class="{hidden: selectedSwatch!=swatchIndex}" class="color-info" :style="{color: invertColor(rgbaToHex(color),true)}">
         {{rgbaToHex(color)}}
       </div>
@@ -128,7 +128,6 @@ export default {
   padding-left: 10px;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
 }
 
 .squash {
@@ -148,6 +147,7 @@ export default {
 .color-field {
   flex-grow: 1;
   margin-bottom: 10px;
+  cursor: pointer;
 }
 
 .color-field:first-child {
