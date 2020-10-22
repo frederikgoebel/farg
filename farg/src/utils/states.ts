@@ -26,15 +26,19 @@ import {
 
 import { Swatch } from "./pixelator";
 
+import easing from "./animation/easing";
 import {
   Parallel,
   Sequential,
-  LineAnimation,
-  PaletteAnimation,
   Animation,
-  highlightPalette,
-  easing
-} from "./animation";
+  Point2D
+} from "./animation/animation";
+import { LineAnimation } from "./animation/lineAnimation";
+import {
+  PaletteAnimation,
+  highlightPalette
+} from "./animation/paletteAnimation";
+import Rectangle from "./animation/rectangleAnimation";
 
 const frontColor = "#F7566A";
 const backColor = "#023F92";
@@ -95,7 +99,13 @@ class Idle {
     this.setTextCallback = setTextCallback;
     this.perfectTime = 0;
   }
-  async tick(drawCtx, video, videoBuffer, posenet, dt) {
+  async tick(
+    drawCtx: CanvasRenderingContext2D,
+    video,
+    videoBuffer,
+    posenet,
+    dt
+  ) {
     if (__DEBUG_MODE) return "colorSteal";
 
     saveVideoToBuffer(video, videoBuffer);
@@ -246,7 +256,6 @@ class Flash {
       await updatePose(posenet, videoBuffer.canvas);
     }
 
-
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
     drawCtx.drawImage(videoBuffer.canvas, 0, 0);
@@ -284,7 +293,7 @@ class ColorSteal {
       "#" + (0x1000000 + Math.random() * 0xffffff).toString(16).substr(1, 6)
     );
   }
-  async tick(drawCtx, video, videoBuffer, posenet) {
+  async tick(drawCtx: CanvasRenderingContext2D, video, videoBuffer, posenet) {
     const now = Date.now();
     if (this.lastUpdate) {
       this.deltaTime = now - this.lastUpdate;
@@ -327,6 +336,10 @@ class ColorSteal {
       this.boundingBoxes[0].startY -= margin;
       this.boundingBoxes[0].endY -= margin;
 
+      if (__DEBUG_MODE) {
+        this.boundingBoxes = this.boundingBoxes.slice(0, 1);
+      }
+
       drawCtx.lineWidth = 1;
       drawCtx.strokeStyle = "white";
 
@@ -335,68 +348,62 @@ class ColorSteal {
       if (!__DEBUG_MODE) {
         swatches = generateSwatches(videoBuffer.canvas, this.boundingBoxes);
       } else {
-        swatches = Array(7).fill(mockSwatch);
+        swatches = Array(6).fill(mockSwatch);
       }
 
       this.swatch = swatches.map(s => s.prominentColor);
 
-      const DURATION_MS = 3000;
+      const lineAnimation = (from: [number, number], to: [number, number]) => {
+        const animation = new LineAnimation(
+          drawCtx,
+          { x: from[0], y: from[1] },
+          { x: to[0], y: to[1] },
+          1000
+        );
+        animation.setName("LineAnimation");
+        return animation;
+      };
+
       const lineAnimations = this.boundingBoxes.map(bb => {
-        const topHorizontal = new LineAnimation(
-          drawCtx,
-          {
-            x: bb.startX,
-            y: bb.startY
-          },
-          {
-            x: bb.endX,
-            y: bb.startY
-          },
-          DURATION_MS
+        const topHorizontal = lineAnimation(
+          [bb.startX, bb.startY],
+          [bb.endX, bb.startY]
         );
-        const bottomHorizontal = new LineAnimation(
-          drawCtx,
-          {
-            x: bb.endX,
-            y: bb.endY
-          },
-          {
-            x: bb.startX,
-            y: bb.endY
-          },
-          DURATION_MS
+
+        const bottomHorizontal = lineAnimation(
+          [bb.endX, bb.endY],
+          [bb.startX, bb.endY]
         );
-        const leftVertical = new LineAnimation(
-          drawCtx,
-          {
-            x: bb.startX,
-            y: bb.startY
-          },
-          {
-            x: bb.startX,
-            y: bb.endY
-          },
-          DURATION_MS
+
+        const leftVertical = lineAnimation(
+          [bb.startX, bb.startY],
+          [bb.startX, bb.endY]
         );
-        const rightVertical = new LineAnimation(
-          drawCtx,
-          {
-            x: bb.endX,
-            y: bb.endY
-          },
-          {
-            x: bb.endX,
-            y: bb.startY
-          },
-          DURATION_MS
+
+        const rightVertical = lineAnimation(
+          [bb.endX, bb.endY],
+          [bb.endX, bb.startY]
         );
-        return new Parallel(
+
+        const linesAnimation = new Parallel(
           topHorizontal,
           bottomHorizontal,
           leftVertical,
           rightVertical
         );
+        linesAnimation.setName("Parallel lines");
+        return linesAnimation;
       });
+
+      const rectangleSize = {
+        width: 80,
+        height: drawCtx.canvas.height / 6
+      };
+
+      const destination: Point2D = {
+        x: drawCtx.canvas.width - 80,
+        y: 0
+      };
 
       const paletteAnimations: Animation[] = this.boundingBoxes.map(
         (bb, index) => {
@@ -405,28 +412,85 @@ class ColorSteal {
             swatch: swatches[index],
             topLeft: { x: bb.endX + 20, y: bb.startY - 20 },
             boxSize: 32,
-            duration: DURATION_MS
+            duration: 1500
           });
+          animation.setName("PaletteAnimation");
 
-          return highlightPalette({
+          const highlight = highlightPalette({
             animation,
-            duration: 5000,
+            duration: 4500,
             easingFunction: easing.easeOutCubic
           });
+          highlight.setName("PaletteHighlightAnimation");
+
+          const scaleConfig = {
+            ctx: drawCtx,
+            duration: 1400,
+            size: rectangleSize,
+            easingFunction: easing.easeInOutQuart,
+            name: "ScaleAnimation"
+          };
+
+          const translateConfig = {
+            duration: 1200,
+            to: { ...destination },
+            easingFunction: easing.easeOutQuart,
+            name: "TranslateAnimation"
+          };
+
+          const rectangleAnimation = Rectangle.scale(scaleConfig).translate(
+            translateConfig
+          );
+
+          rectangleAnimation.setName("RectangleAnimation");
+
+          destination.y += rectangleSize.height;
+
+          highlight.onFinish = () => {
+            const highlightedBox = new Rectangle(
+              swatches[index].prominentColor,
+              highlight.highlightPosition().x,
+              highlight.highlightPosition().y,
+              32,
+              32
+            );
+
+            rectangleAnimation.setRectangle(highlightedBox);
+            highlight.fadeOut(1000, easing.easeOutCubic);
+          };
+
+          const fullPaletteAnimation = Sequential.create(
+            highlight,
+            rectangleAnimation
+          );
+          fullPaletteAnimation.setName("fullPaletteAnimation");
+
+          return fullPaletteAnimation;
         }
       );
 
-      this.animation = new Sequential(
-        new Parallel(...lineAnimations),
-        new Parallel(...paletteAnimations)
+      const allLineAnimations = new Parallel(...lineAnimations);
+      allLineAnimations.setName("allLineAnimations");
+
+      const allPaletteAnimations = new Parallel(...paletteAnimations);
+      allPaletteAnimations.setName("allPaletteAnimations");
+
+      this.animation = Sequential.create(
+        allLineAnimations,
+        allPaletteAnimations
       );
+      this.animation.setName("Main animation");
+
       this.FIRST_TIME = false;
     }
 
     if (this.animation) {
-      this.animation.update(this.deltaTime);
+      if (this.deltaTime && this.deltaTime !== 0) {
+        this.animation.update(this.deltaTime);
+        this.animation.render();
+      }
 
-      if (this.animation.isFinished()) {
+      if (this.animation.isFinished() && !__DEBUG_MODE) {
         this.colorCallback(this.swatch);
         this.FIRST_TIME = true;
 
