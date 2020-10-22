@@ -388,8 +388,7 @@ class ColorSteal {
 
           const highlight = highlightPalette({
             animation,
-            // duration: 5000,
-            duration: 1000,
+            duration: 5000,
             easingFunction: easing.easeOutCubic
           });
 
@@ -397,7 +396,7 @@ class ColorSteal {
             drawCtx,
             1000,
             rectangleSize
-          ).translate(1000, destination);
+          ).translate(1000, { ...destination });
           destination.y += rectangleSize.height;
 
           highlight.onFinish = () => {
