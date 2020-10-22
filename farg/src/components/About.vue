@@ -9,6 +9,10 @@
       Färg is an interactive installation that was created as part of the Interaction Design program at the Chalmers University of Technology in the autumn of 2020. The installation is part of an larger exhibition with the theme Quantified Self
       exhibited in the <a href="#">Visual Arena</a> in Gothenburg, Sweden. The exhibition is aimed at 12-16 year olds, and has the goal to raise the interest in science and technology, while at the same time providing a fun and inspiring experience.</p>
     <p>
+      All the colors that can be seen on the feed are sampled from visitors at the Visual Arena. Färg samples the users colors on different points on the body and finds the most representative color for that area. Through this a unique color swatch
+      is generated.
+    </p>
+    <p>
       The exhibtion takes place virtual and phyical on Friday the 23rd of October 2020. Register <strong><a target="_blank" href="https://attendee.gotowebinar.com/register/5463457196058028560">here</a></strong> to join.
     </p>
     <div class="container center createdContainer pt-32">

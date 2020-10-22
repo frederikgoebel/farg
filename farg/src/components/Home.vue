@@ -1,5 +1,5 @@
 <template>
-<div class="item-100 container">
+<div class="item-100 container fill-height">
   <div class="feature-stream lower-line">
     <Stream streamID="debug" />
     <!-- <TitleCard>
@@ -33,9 +33,14 @@ export default {
 
 <style scoped>
 .feature-stream {
-  height: 80vh;
+  height: 100%;
   width: 100%;
   display: flex;
-  position: relative;
+}
+
+.fill-height {
+  flex: 1;
+  height: 90%;
+  align-content: stretch;
 }
 </style>

@@ -7,6 +7,11 @@ html {
   background: #0F0F10;
   color: white;
   font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
 }
 
 a {

@@ -1,5 +1,5 @@
 <template>
-<div id="app" class="container">
+<div id="app">
   <header v-if="showHeader" class="header container lower-line">
     <router-link to="/" exact>
       <div class="container">
@@ -29,6 +29,11 @@ export default {
 </script>
 
 <style scoped>
+#app {
+  width: 100%;
+  height: 100%;
+}
+
 .header {
   height: 90px;
   padding: 0 64px 0 64px;
