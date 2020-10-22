@@ -51,6 +51,7 @@ h2 {
   flex-wrap: wrap;
   flex-direction: row;
   align-items:  center;
+
 }
 
 [class*="item-"] {
@@ -160,7 +161,7 @@ h2 {
 .content{
   width: 90%;
   align-self: center;
-  align-items: flex-start;
+  align-items: center;
 }
 
 @media only screen and (min-width: 768px) {
@@ -185,4 +186,26 @@ h2 {
 
 .createdContainer a {
   text-decoration: none;
+}
+
+
+.about{
+  width: 200px;
+}
+
+.check-it{
+  font-size: 1.1rem;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+}
+
+.check-it a{
+  font-weight: bold;
+  font-size: 1.5rem;
+  text-decoration: underline;
+}
+
+.stretch{
+
 }
