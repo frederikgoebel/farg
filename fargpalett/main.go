@@ -24,7 +24,7 @@ var createColorTable = `
 	`
 
 var createSwatchTable = `
-  	CREATE TABLE IF NOT EXISTS swatches (id INTEGER PRIMARY KEY, stream_id TEXT, creation_date DATE DEFAULT (datetime('now')));
+  	CREATE TABLE IF NOT EXISTS swatches (id INTEGER PRIMARY KEY, stream_id TEXT, creation_date DATE DEFAULT (datetime('now')), creator TEXT);
   	`
 
 var insertColor = `
@@ -32,14 +32,14 @@ var insertColor = `
   	`
 
 var insertSwatch = `
-      	INSERT INTO swatches (stream_id) VALUES (?);
+      	INSERT INTO swatches (stream_id, creator) VALUES (?,?);
       	`
 
 var getSwatchID = `
       	SELECT id FROM swatches WHERE stream_id = ?;`
 
-var getSwatchCreationDate = `
-      	SELECT creation_date FROM swatches WHERE id = ?;`
+var getSwatch = `
+      	SELECT creation_date, creator FROM swatches WHERE id = ?;`
 
 var getColorsForSwatch = `
       	SELECT color FROM colors WHERE swatch_id = ?;
@@ -93,8 +93,10 @@ func main() {
 
 // Swatch represents the json body of a new color swatch
 type Swatch struct {
+	ID           string    `json:"id"`
 	Colors       []string  `json:"colors"`
 	CreationDate time.Time `json:"-"`
+	Creator      string    `json:"creator"`
 }
 
 func (d Swatch) MarshalJSON() ([]byte, error) {
@@ -188,7 +190,11 @@ func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
 			return
 		}
 
-		res, err := tx.Exec(insertSwatch, streamID)
+		if swatch.Creator == "" {
+			swatch.Creator = "unknown"
+		}
+
+		res, err := tx.Exec(insertSwatch, streamID, swatch.Creator)
 		if err != nil {
 			log.Println(err)
 			tx.Rollback()
@@ -209,7 +215,6 @@ func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
 				return
 			}
 		}
-		// HIER WEITHER: swatch braucht richtiges date + owner of swatch damit keine doppleung im  clinet
 		swatch, err = GetSwatch(fmt.Sprint(swatchID), tx)
 		if err != nil {
 			log.Println(err)
@@ -231,9 +236,10 @@ func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
 func GetSwatch(id string, tx *sql.Tx) (Swatch, error) {
 
 	var swatch Swatch
+	swatch.ID = id
 
-	row := tx.QueryRow(getSwatchCreationDate, id)
-	err := row.Scan(&swatch.CreationDate)
+	row := tx.QueryRow(getSwatch, id)
+	err := row.Scan(&swatch.CreationDate, &swatch.Creator)
 	if err != nil {
 		return swatch, err
 	}
