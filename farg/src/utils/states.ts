@@ -62,9 +62,8 @@ class BeforeLoad {
 
     shapeshifter.tick(undefined, dt);
 
-
     drawPathShape(drawCtx, shapeshifter.shape);
-    drawCtx.fillStyle ="black";
+    drawCtx.fillStyle = "black";
     drawCtx.fill();
 
     drawCtx.save();
@@ -499,7 +498,7 @@ class ColorSteal {
         delete this.lastUpdate;
         delete this.animation;
 
-        console.log("Animation finished.");
+        // console.log("Animation finished.");
 
         return "idle";
       }
@@ -511,4 +510,4 @@ class ColorSteal {
   }
 }
 
-export { Idle, Found, Flash, ColorSteal , BeforeLoad};
+export { Idle, Found, Flash, ColorSteal, BeforeLoad };

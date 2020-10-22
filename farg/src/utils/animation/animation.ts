@@ -72,12 +72,12 @@ export abstract class BaseAnimation implements Animation {
       console.warn("this.finished was true, but setting it back to false?");
     }
 
-    if (!this.finished && finished) {
-      if (this.identifier === "N/A") {
-        console.log(this);
-      }
-      console.log("Animation " + this.identifier + " finished.");
-    }
+    // if (!this.finished && finished) {
+    //   if (this.identifier === "N/A") {
+    //     console.log(this);
+    //   }
+    //   console.log("Animation " + this.identifier + " finished.");
+    // }
 
     this.finished = finished;
   };
@@ -269,7 +269,6 @@ export abstract class BaseSequential<
     while (i < size()) {
       const animation = get(i);
       if (animation.shouldDelete()) {
-        console.log("[Sequential] Deleting " + animation.identifier);
         removeAtIndex(i);
         continue;
       }

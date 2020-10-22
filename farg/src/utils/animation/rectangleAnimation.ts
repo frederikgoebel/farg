@@ -192,12 +192,6 @@ export class Scale extends RectangleAnimation {
 
     if (this.elapsedTime >= this.duration) {
       this.setFinished(true);
-      console.log(
-        "When scale finished >> x: " +
-          this.rectangle.x +
-          ", y: " +
-          this.rectangle.y
-      );
     }
 
     return this.isFinished();
@@ -219,12 +213,7 @@ export class Translate extends RectangleAnimation {
       x: this.rectangle.x,
       y: this.rectangle.y
     };
-
     this.to = to;
-
-    console.log(
-      "Translate moves from >> x: " + this.from.x + ", y: " + this.from.y
-    );
   }
 
   updateAnimation = (deltaTime: number): boolean => {
