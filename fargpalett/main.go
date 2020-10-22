@@ -76,7 +76,7 @@ func main() {
 	router.PathPrefix("/").Handler(fs)
 
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
-	originsOk := handlers.AllowedOrigins([]string{"http://farg.app", "http://www.farg.app", "http://dev.farg.app", "http://localhost:8080"}) // TOOD localhost should not be set. load from config
+	originsOk := handlers.AllowedOrigins([]string{"https://farg.app", "https://www.farg.app", "https://dev.farg.app", "http://localhost:8080"}) // TOOD localhost should not be set. load from config
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
 	server := &http.Server{
