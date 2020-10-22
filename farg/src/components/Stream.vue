@@ -53,19 +53,17 @@ export default {
       return this.swatches.slice().reverse();
     },
     hideMirror() {
-      return this.isSmallScreen && !this.isSupported
-    },
-    isSmallScreen() {
-      return window.matchMedia("max-width: 680px")
-    },
-    isSupported() {
-      var ua = navigator.userAgent.toLowerCase();
-      if (ua.indexOf('safari') != -1) {
-        if (ua.indexOf('chrome') == -1) {
-          return false
-        }
-      }
-      return true
+      return [
+          'iPad Simulator',
+          'iPhone Simulator',
+          'iPod Simulator',
+          'iPad',
+          'iPhone',
+          'iPod'
+        ].includes(navigator.platform)
+        // iPad on iOS 13 detection
+        ||
+        (navigator.userAgent.includes("Mac") && "ontouchend" in document)
     },
   },
   methods: {
