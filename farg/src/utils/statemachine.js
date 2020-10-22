@@ -8,10 +8,10 @@ class StateMachine {
     this.states = {
       idle: new stateClasses.Idle(setTextCallback),
       found: new stateClasses.Found(
-        (shouldTick) => (this.TICK_ENABLED = shouldTick)
+        shouldTick => (this.TICK_ENABLED = shouldTick)
       ),
       flash: new stateClasses.Flash(),
-      colorSteal: new stateClasses.ColorSteal(colorCallback),
+      colorSteal: new stateClasses.ColorSteal(colorCallback)
     };
     this.TICK_ENABLED = true;
     this.lastTime = new Date();

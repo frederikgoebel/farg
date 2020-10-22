@@ -41,7 +41,7 @@ function rgb2lab(rgb) {
 }
 
 const splitIntoNChunks = (array, n) => {
-  let chunks = [];
+  let chunks: any[] = [];
   for (let i = 0; i < array.length; i += n) {
     chunks.push(array.slice(i, i + n));
   }
@@ -50,7 +50,7 @@ const splitIntoNChunks = (array, n) => {
 
 const getProminentColor = (swatches, canvas) => {
   const colors = splitIntoNChunks(swatches, 4);
-  let colorDifferences = colors.map((_) => 0);
+  let colorDifferences = colors.map(_ => 0);
   const ctx = canvas.getContext("2d");
   for (let j = 0; j < canvas.height; j++) {
     for (let i = 0; i < canvas.width; i++) {

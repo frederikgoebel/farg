@@ -1,4 +1,18 @@
-export const getHairBB = (keypoints) => {
+export interface BoundingBox {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+}
+
+export const mockBB: BoundingBox = {
+  startX: 0,
+  startY: 0,
+  endX: 100,
+  endY: 100
+};
+
+export const getHairBB = (keypoints): BoundingBox => {
   const leftEar = keypoints.filter(({ part }) => part === "leftEar")[0]
     .position;
   const leftEye = keypoints.filter(({ part }) => part === "leftEye")[0]
@@ -14,7 +28,7 @@ export const getHairBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-export const getFaceBB = (keypoints) => {
+export const getFaceBB = (keypoints): BoundingBox => {
   const leftEar = keypoints.filter(({ part }) => part === "leftEar")[0]
     .position;
   const rightEar = keypoints.filter(({ part }) => part === "rightEar")[0]
@@ -28,7 +42,7 @@ export const getFaceBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-export const getUpperBodyBB = (keypoints) => {
+export const getUpperBodyBB = (keypoints): BoundingBox => {
   const leftShoulder = keypoints.filter(
     ({ part }) => part === "leftShoulder"
   )[0].position;
@@ -46,7 +60,7 @@ export const getUpperBodyBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-export const getLowerBodyBB = (keypoints) => {
+export const getLowerBodyBB = (keypoints): BoundingBox => {
   const elbow = keypoints.filter(({ part }) => part === "leftElbow")[0]
     .position;
   const leftHip = keypoints.filter(({ part }) => part === "leftHip")[0]
@@ -62,7 +76,7 @@ export const getLowerBodyBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-export const getThighsBB = (keypoints) => {
+export const getThighsBB = (keypoints): BoundingBox => {
   const leftHip = keypoints.filter(({ part }) => part === "leftHip")[0]
     .position;
   const rightKnee = keypoints.filter(({ part }) => part === "rightKnee")[0]
@@ -76,7 +90,7 @@ export const getThighsBB = (keypoints) => {
   return { startX, startY, endX, endY };
 };
 
-export const getFeetBB = (keypoints) => {
+export const getFeetBB = (keypoints): BoundingBox => {
   const leftAnkle = keypoints.filter(({ part }) => part === "leftAnkle")[0]
     .position;
 

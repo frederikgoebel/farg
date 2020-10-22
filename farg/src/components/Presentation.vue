@@ -1,25 +1,21 @@
 <template>
-<div class="item-100 container presentation-frame">
-  <div class="feature-stream">
-    <Stream streamID="debug" preview showMirror />
+  <div class="item-100 container presentation-frame">
+    <div class="feature-stream">
+      <Stream streamID="debug" preview showMirror />
+    </div>
   </div>
-</div>
-
-
-</div>
 </template>
 
-
 <script>
-import Stream from './Stream.vue'
-import Mirror from './Mirror.vue'
+import Stream from "./Stream.vue";
+import Mirror from "./Mirror.vue";
 
 export default {
   components: {
     Stream,
-    Mirror,
-  },
-}
+    Mirror
+  }
+};
 </script>
 
 <style scoped>

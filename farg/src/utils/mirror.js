@@ -9,7 +9,7 @@ const usedKeyPointParts = new Set([
   "leftHip",
   "rightHip",
   "rightKnee",
-  "leftAnkle",
+  "leftAnkle"
 ]);
 
 function drawPoint(ctx, x, y, r, color) {
@@ -27,7 +27,7 @@ function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
       continue;
     }
 
-    const {y, x} = keypoint.position;
+    const { y, x } = keypoint.position;
     drawPoint(ctx, x * scale, y * scale, 3, "rgba(0,0,255,1)");
   }
 }
@@ -46,7 +46,7 @@ class CollisionBody {
       new SAT.Vector(80 * scale, 220 * scale),
       new SAT.Vector(20 * scale, 220 * scale),
       new SAT.Vector(20 * scale, 120 * scale),
-      new SAT.Vector(0, 120 * scale),
+      new SAT.Vector(0, 120 * scale)
     ]);
   }
   colliding(pose) {
@@ -82,7 +82,7 @@ class CollisionBody {
     );
     ctx.translate(this.body.pos.x, this.body.pos.y);
     ctx.moveTo(0, 0);
-    this.body.points.forEach((vector) => {
+    this.body.points.forEach(vector => {
       ctx.lineTo(vector.x, vector.y);
     });
     ctx.closePath();
@@ -108,11 +108,11 @@ async function setupCamera(video) {
 
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: false,
-    video: true,
+    video: true
   });
   video.srcObject = stream;
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     video.onloadedmetadata = () => {
       resolve();
     };
@@ -123,9 +123,11 @@ function destructCamera(video) {
   const stream = video.srcObject;
   const tracks = stream.getTracks();
 
-  tracks.forEach(function(track) {
-    track.stop();
-  });
+  if (tracks) {
+    tracks.forEach(function(track) {
+      track.stop();
+    });
+  }
 
   video.srcObject = null;
 }
@@ -133,8 +135,8 @@ function destructCamera(video) {
 function saveVideoToBuffer(video, buffer) {
   buffer.save();
 
-  let scale = buffer.canvas.height / video.videoHeight;
-  let offset = -(buffer.canvas.width - video.videoWidth * scale) / 2; //
+  const scale = buffer.canvas.height / video.videoHeight;
+  const offset = -(buffer.canvas.width - video.videoWidth * scale) / 2; //
 
   buffer.scale(scale, scale);
   buffer.scale(-1, 1);
@@ -145,30 +147,41 @@ function saveVideoToBuffer(video, buffer) {
 }
 
 // TODO this is very hacky. make a nice class <3
-let pose = undefined
+let pose = undefined;
 
 async function updatePose(net, video) {
   pose = await net.estimateSinglePose(video, {
     flipHorizontal: false,
-    decodingMethod: "single-person",
+    decodingMethod: "single-person"
   });
-  pose.keypoints = pose.keypoints.filter(({score}) => score > 0.6);
+  pose.keypoints = pose.keypoints.filter(({ score }) => score > 0.6);
 }
 
 function getPose() {
   return pose;
 }
 
-let raw = "161.833333 139.808458 221.333333 129 212.833333 211.144279 214.25 258.701493 239.75 266.267413 263.833333 264.105721 278 266.267413 295 288.965174 312 372.190299 338.916667 535.39801 341.75 655.371891 316.25 647.80597 299.25 518.104478 293.583333 478.113184 285.083333 453.253731 273.75 440.283582 272.333333 548.368159 272.333333 594.844527 261 694.282338 252.5 796.962687 248.25 899.643035 258.166667 998 227 998 198.666667 998 177.416667 896.400498 173.166667 836.95398 159 722.384328 142 630.512438 142 591.60199 136.333333 428.394279 116.5 520.266169 99.5 639.159204 93.8333333 681.312189 69.75 661.856965 69.75 569.985075 76.8333333 454.334577 99.5 304.097015 137.75 280.318408 153.333333 272.752488 167.5 251.135572 159 217.629353";
+const raw =
+  "161.833333 139.808458 221.333333 129 212.833333 211.144279 214.25 258.701493 239.75 266.267413 263.833333 264.105721 278 266.267413 295 288.965174 312 372.190299 338.916667 535.39801 341.75 655.371891 316.25 647.80597 299.25 518.104478 293.583333 478.113184 285.083333 453.253731 273.75 440.283582 272.333333 548.368159 272.333333 594.844527 261 694.282338 252.5 796.962687 248.25 899.643035 258.166667 998 227 998 198.666667 998 177.416667 896.400498 173.166667 836.95398 159 722.384328 142 630.512438 142 591.60199 136.333333 428.394279 116.5 520.266169 99.5 639.159204 93.8333333 681.312189 69.75 661.856965 69.75 569.985075 76.8333333 454.334577 99.5 304.097015 137.75 280.318408 153.333333 272.752488 167.5 251.135572 159 217.629353";
 
-let numbers = raw.split(" ");
+const numbers = raw.split(" ");
 
-let drawList = [];
+const drawList = [];
 for (let i = 0; i < numbers.length; i += 2) {
   drawList.push({
     x: numbers[i] - 67.0,
-    y: numbers[i + 1] - 125.0,
+    y: numbers[i + 1] - 125.0
   });
 }
 
-export { setupCamera, destructCamera, setupVideoBuffer, saveVideoToBuffer, getPose, updatePose, CollisionBody, drawKeypoints, usedKeyPointParts };
+export {
+  setupCamera,
+  destructCamera,
+  setupVideoBuffer,
+  saveVideoToBuffer,
+  getPose,
+  updatePose,
+  CollisionBody,
+  drawKeypoints,
+  usedKeyPointParts
+};
