@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import { saveVideoToBuffer, CollisionBody, getPose, drawKeypoints, usedKeyPointParts } from "./mirror";
+import { saveVideoToBuffer, CollisionBody, getPose, updatePose, drawKeypoints, usedKeyPointParts } from "./mirror";
 
 import { Shapeshifter, toPoseDict } from './skeleton'
 import drawPathShape from './blob'
@@ -20,8 +20,9 @@ class Idle {
   }
   async tick(drawCtx, video, videoBuffer, posenet, dt) {
     saveVideoToBuffer(video, videoBuffer);
-    let pose = await getPose(posenet, videoBuffer.canvas);
-    let poseDict = toPoseDict(pose.keypoints)
+    await updatePose(posenet, videoBuffer.canvas);
+    let pose = getPose();
+    let poseDict = toPoseDict(pose.keypoints);
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
@@ -65,11 +66,13 @@ class Idle {
 
     if ((poseDict["leftEye"] == undefined) || (poseDict["leftAnkle"] == undefined)) {
       this.setTextCallback("Go further away!")
+      this.perfectTime = 0;
     } else if (allIn) {
       this.perfectTime += dt;
       this.setTextCallback("Perfect stay like this.")
     } else {
       this.setTextCallback("Searching for some bones..")
+      this.perfectTime = 0;
     }
 
     if (this.perfectTime > 3000) {
@@ -109,7 +112,8 @@ class Found {
     saveVideoToBuffer(video, videoBuffer);
     this.setTickEnabled && this.setTickEnabled(true);
 
-    let pose = await getPose(posenet, videoBuffer.canvas);
+    await updatePose(posenet, videoBuffer.canvas);
+    let pose = getPose();
     let allIn = collisionBody.colliding(pose);
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
@@ -146,8 +150,11 @@ class Flash {
 
   async tick(drawCtx, video, videoBuffer, posenet) {
     this.flashTl.play();
-    if (this.flashTl.totalProgress() == 0)
+    if (this.flashTl.totalProgress() == 0) {
       saveVideoToBuffer(video, videoBuffer);
+      await updatePose(posenet, videoBuffer.canvas);
+    }
+
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
@@ -200,7 +207,7 @@ class ColorSteal {
     drawCtx.restore();
 
     if (this.FIRST_TIME) {
-      this.pose = await getPose(posenet, videoBuffer.canvas);
+      this.pose = getPose();
 
       const {keypoints} = this.pose;
       this.boundingBoxes = [

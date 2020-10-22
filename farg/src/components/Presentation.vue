@@ -1,7 +1,7 @@
 <template>
 <div class="item-100 container presentation-frame">
   <div class="feature-stream">
-    <Stream streamID="debug" preview />
+    <Stream streamID="debug" preview showMirror />
   </div>
 </div>
 

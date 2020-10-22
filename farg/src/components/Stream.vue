@@ -1,10 +1,10 @@
 <template>
 <transition-group name="stream" tag="div" id="color-stream" class="row">
-  <Mirror key="mirror" @swatchAdded="addSwatch" />
+  <Mirror v-if="showMirror" key="mirror" @swatchAdded="addSwatch" />
   <div key="loadingMsg" v-if="isLoading">Loading ...</div>
-  <div v-else v-for="(swatch, swatchIndex) in swatchesToShow" :key="`swatch-${swatchIndex}`" @click="selectSwatch(swatchIndex)" class="color-column" :class="{squash: preview, large: selectedSwatch==swatchIndex}">
-    <div v-for=" (color, colorIndex) in swatch.colors" :key="`color-${colorIndex}`" class="color-field" :style="{background:  color}">
-      <div :class="{hidden: selectedSwatch!=swatchIndex}" class="color-info" :style="{color: invertColor(rgbaToHex(color),true)}">
+  <div v-else v-for="swatch in swatchesToShow" :key="`swatch-${swatch.id}`" class="color-column" :class="{squash: preview, large: selectedSwatch==swatch.id}">
+    <div v-for=" (color, colorIndex) in swatch.colors" :key="`color-${colorIndex}`" class="color-field" :style="{background:  color}" @click="selectSwatch(swatch.id)">
+      <div :class="{hidden: selectedSwatch!=swatch.id}" class="color-info" :style="{color: invertColor(rgbaToHex(color),true)}">
         {{rgbaToHex(color)}}
       </div>
     </div>
@@ -30,6 +30,8 @@ export default {
     isLoading: true,
     swatches: [],
     selectedSwatch: null,
+    creatorID: "unknown",
+    tmpIDs: 0
   }),
   components: {
     Mirror
@@ -40,6 +42,7 @@ export default {
       required: true,
     },
     preview: Boolean,
+    showMirror: Boolean,
   },
   computed: {
     swatchesToShow() {
@@ -50,24 +53,30 @@ export default {
     rgbaToHex,
     invertColor,
     toRelativeTime(time) {
-      return timeAgo.format(new Date(time), 'twitter-minute-now') + " ago" // TODO how to make this reactive
+      return timeAgo.format(new Date(time), 'twitter-minute-now') // TODO how to make this reactive
     },
-    selectSwatch(index) {
-      if (index == this.selectedSwatch)
-        this.selectedSwatch = null;
+    selectSwatch(id) {
+      if (id == this.selectedSwatch)
+        this.selectedSwatch = -1;
       else
-        this.selectedSwatch = index;
+        this.selectedSwatch = id;
     },
     addSwatch(swatch) {
       swatch.forEach((color, index) => {
         swatch[index] = this.rgbaToHex(color)
       })
 
-      // this.swatches.push(swatch);
-
-      axios.post(process.env.VUE_APP_API_SERVER + '/' + this.streamID + '/swatches', {
+      let swatchObj = {
         colors: swatch,
-      }).catch(function(error) {
+        creator: this.creatorID,
+        id: "tmpID_" + this.tmpIDs,
+      }
+      this.tmpIDs++;
+
+      this.swatches.push(swatchObj);
+      this.selectedSwatch = swatchObj.id
+
+      axios.post(process.env.VUE_APP_API_SERVER + '/' + this.streamID + '/swatches', swatchObj).catch(function(error) {
         // handle error
         console.log(error);
       })
@@ -77,7 +86,15 @@ export default {
 
       var msg = JSON.parse(event.data);
       console.log(msg);
-      this.swatches.push(msg.colors);
+      if (msg.creator != this.creatorID)
+        this.swatches.push(msg);
+    },
+    uuidv4() { // Not super collision safe but good enough for now
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0,
+          v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
     }
 
   },
@@ -94,6 +111,9 @@ export default {
         // handle error
         console.log(error);
       })
+
+
+    this.creatorID = this.uuidv4();
 
 
     this.socket = new WebSocket(process.env.VUE_APP_WS_SERVER);
@@ -127,7 +147,6 @@ export default {
   padding-left: 10px;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
 }
 
 .squash {
@@ -147,6 +166,7 @@ export default {
 .color-field {
   flex-grow: 1;
   margin-bottom: 10px;
+  cursor: pointer;
 }
 
 .color-field:first-child {

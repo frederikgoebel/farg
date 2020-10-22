@@ -90,7 +90,7 @@ export default {
   display: block;
   align-items: stretch;
   width: 25%;
-  flex-grow: 1;
+  flex-grow: 0;
   flex-shrink: 0;
 }
 

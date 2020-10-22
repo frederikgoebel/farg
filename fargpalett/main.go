@@ -24,7 +24,7 @@ var createColorTable = `
 	`
 
 var createSwatchTable = `
-  	CREATE TABLE IF NOT EXISTS swatches (id INTEGER PRIMARY KEY, stream_id TEXT, creation_date DATE DEFAULT (datetime('now')));
+  	CREATE TABLE IF NOT EXISTS swatches (id INTEGER PRIMARY KEY, stream_id TEXT, creation_date DATE DEFAULT (datetime('now')), creator TEXT);
   	`
 
 var insertColor = `
@@ -32,12 +32,14 @@ var insertColor = `
   	`
 
 var insertSwatch = `
-      	INSERT INTO swatches (stream_id) VALUES (?);
+      	INSERT INTO swatches (stream_id, creator) VALUES (?,?);
       	`
 
 var getSwatchID = `
-      	SELECT id, creation_date FROM swatches WHERE stream_id = ?;
-              	`
+      	SELECT id FROM swatches WHERE stream_id = ?;`
+
+var getSwatch = `
+      	SELECT creation_date, creator FROM swatches WHERE id = ?;`
 
 var getColorsForSwatch = `
       	SELECT color FROM colors WHERE swatch_id = ?;
@@ -91,8 +93,10 @@ func main() {
 
 // Swatch represents the json body of a new color swatch
 type Swatch struct {
+	ID           string    `json:"id"`
 	Colors       []string  `json:"colors"`
 	CreationDate time.Time `json:"-"`
+	Creator      string    `json:"creator"`
 }
 
 func (d Swatch) MarshalJSON() ([]byte, error) {
@@ -186,7 +190,11 @@ func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
 			return
 		}
 
-		res, err := tx.Exec(insertSwatch, streamID)
+		if swatch.Creator == "" {
+			swatch.Creator = "unknown"
+		}
+
+		res, err := tx.Exec(insertSwatch, streamID, swatch.Creator)
 		if err != nil {
 			log.Println(err)
 			tx.Rollback()
@@ -207,6 +215,12 @@ func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
 				return
 			}
 		}
+		swatch, err = GetSwatch(fmt.Sprint(swatchID), tx)
+		if err != nil {
+			log.Println(err)
+			tx.Rollback()
+			return
+		}
 
 		b, err := json.Marshal(swatch)
 		if err != nil {
@@ -217,6 +231,31 @@ func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
 		w.WriteHeader(http.StatusCreated)
 		tx.Commit()
 	})
+}
+
+func GetSwatch(id string, tx *sql.Tx) (Swatch, error) {
+
+	var swatch Swatch
+	swatch.ID = id
+
+	row := tx.QueryRow(getSwatch, id)
+	err := row.Scan(&swatch.CreationDate, &swatch.Creator)
+	if err != nil {
+		return swatch, err
+	}
+
+	rows, err := tx.Query(getColorsForSwatch, id)
+	if err != nil {
+		return swatch, err
+	}
+
+	for rows.Next() {
+		var color string
+		rows.Scan(&color)
+		swatch.Colors = append(swatch.Colors, color)
+	}
+
+	return swatch, nil
 }
 
 type Stream struct {
@@ -242,26 +281,16 @@ func getStream(db *sql.DB) http.Handler {
 		var stream Stream
 		for swatchRows.Next() {
 			var swatchID string
-			var creationTime time.Time
-			swatchRows.Scan(&swatchID, &creationTime)
-			rows, err := tx.Query(getColorsForSwatch, swatchID)
+			swatchRows.Scan(&swatchID)
+			swatch, err := GetSwatch(swatchID, tx)
 			if err != nil {
 				log.Print(err)
 				tx.Rollback()
 				return
 			}
-
-			swatch := Swatch{
-				CreationDate: creationTime,
-			}
-
-			for rows.Next() {
-				var color string
-				rows.Scan(&color)
-				swatch.Colors = append(swatch.Colors, color)
-			}
 			stream.Colors = append(stream.Colors, swatch)
 		}
+
 		tx.Commit()
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
