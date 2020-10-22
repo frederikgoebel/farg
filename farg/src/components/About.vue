@@ -52,6 +52,14 @@ export default {
 <style scoped>
 .about {
   font-size: 1.2rem;
+  flex-grow: 1;
+  flex-shrink: 0;
+}
+
+@media (max-width:1000px) {
+  .item-50 {
+    width: 90%;
+  }
 }
 
 .mail-icon {
