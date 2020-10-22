@@ -1,6 +1,9 @@
 <template>
-<div class="mirror">
-  <div class="item-100 beforLoad" v-if="!loaded && !autoLoad">
+<div class="mirror" v-if="!(isSmallScreen && !isSupported)">
+  <div class="item-100 beforeLoad" v-if="!isSupported">
+    <p>Please use <a target="_blank" href="https://www.google.com/chrome/">Chrome</a> to sample your colors.</p>
+  </div>
+  <div class="item-100 beforeLoad" v-if="!loaded && !autoLoad && isSupported">
     <p>Enable your camera to sample your own colors.</p>
     <button @click="loadMirror">Enable camera</button>
   </div>
@@ -32,14 +35,31 @@ export default {
     autoLoad: Boolean
   },
   mounted() {
-    console.log("mounted")
+    if (this.isSupported)
+      console.log("mounted")
     this.stateMachine = new StateMachine(this.swatchAdded, this.setText)
     this.drawRequest = window.requestAnimationFrame(this.draw);
     if (this.autoLoad)
       this.loadMirror()
   },
+  computed: {
+    isSmallScreen() {
+      return window.matchMedia("max-width: 680px")
+    },
+    isSupported() {
+      var ua = navigator.userAgent.toLowerCase();
+      if (ua.indexOf('safari') != -1) {
+        if (ua.indexOf('chrome') == -1) {
+          return false
+        }
+      }
+      return true
+    },
+  },
   methods: {
     loadMirror() {
+      if (!this.isSupported)
+        return
       mirror
         .setupCamera(this.$refs.video)
         .then(stopFn => {
@@ -117,7 +137,7 @@ export default {
 
 <style>
 .callout {
-  font-size: 3rem;
+  font-size: 2.5rem;
   text-align: center;
   background: white;
   color: black;
@@ -145,7 +165,7 @@ export default {
   height: 90%;
 }
 
-.beforLoad {
+.beforeLoad {
   font-size: 1.1rem;
   position: absolute;
   display: flex;
@@ -158,7 +178,11 @@ export default {
   width: 100%;
 }
 
-.beforLoad button {
+.beforeLoad a {
+  text-decoration: underline;
+}
+
+.beforeLoad button {
   background: white;
   border: none;
   border-radius: 5px;
