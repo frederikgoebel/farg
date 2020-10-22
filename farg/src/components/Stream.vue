@@ -149,7 +149,7 @@ export default {
   height: 100%;
   flex-grow: 1;
   flex-shrink: 0;
-  transition: flex-grow 300ms ease-in, width 100ms ease-out;
+  transition: width 300ms ease, flex-grow 3000ms ease;
   width: 100px;
   padding-left: 10px;
   display: flex;
@@ -181,7 +181,13 @@ export default {
 }
 
 .stream-enter {
-  flex-grow: 0.0000001;
+  flex-grow: 0.000001;
+  width: 1px;
+}
+
+.stream-enter.large {
+  flex-grow: 0.000001;
+  width: 1px;
 }
 
 .swatch-info {
