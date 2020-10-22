@@ -78,7 +78,7 @@ export default {
 
       var msg = JSON.parse(event.data);
       console.log(msg);
-      this.swatches.push(msg.colors);
+      this.swatches.push(msg);
     }
 
   },

@@ -36,8 +36,10 @@ var insertSwatch = `
       	`
 
 var getSwatchID = `
-      	SELECT id, creation_date FROM swatches WHERE stream_id = ?;
-              	`
+      	SELECT id FROM swatches WHERE stream_id = ?;`
+
+var getSwatchCreationDate = `
+      	SELECT creation_date FROM swatches WHERE id = ?;`
 
 var getColorsForSwatch = `
       	SELECT color FROM colors WHERE swatch_id = ?;
@@ -207,6 +209,13 @@ func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
 				return
 			}
 		}
+		// HIER WEITHER: swatch braucht richtiges date + owner of swatch damit keine doppleung im  clinet
+		swatch, err = GetSwatch(fmt.Sprint(swatchID), tx)
+		if err != nil {
+			log.Println(err)
+			tx.Rollback()
+			return
+		}
 
 		b, err := json.Marshal(swatch)
 		if err != nil {
@@ -217,6 +226,30 @@ func postSwatch(db *sql.DB, hub *rt.Hub) http.Handler {
 		w.WriteHeader(http.StatusCreated)
 		tx.Commit()
 	})
+}
+
+func GetSwatch(id string, tx *sql.Tx) (Swatch, error) {
+
+	var swatch Swatch
+
+	row := tx.QueryRow(getSwatchCreationDate, id)
+	err := row.Scan(&swatch.CreationDate)
+	if err != nil {
+		return swatch, err
+	}
+
+	rows, err := tx.Query(getColorsForSwatch, id)
+	if err != nil {
+		return swatch, err
+	}
+
+	for rows.Next() {
+		var color string
+		rows.Scan(&color)
+		swatch.Colors = append(swatch.Colors, color)
+	}
+
+	return swatch, nil
 }
 
 type Stream struct {
@@ -242,26 +275,16 @@ func getStream(db *sql.DB) http.Handler {
 		var stream Stream
 		for swatchRows.Next() {
 			var swatchID string
-			var creationTime time.Time
-			swatchRows.Scan(&swatchID, &creationTime)
-			rows, err := tx.Query(getColorsForSwatch, swatchID)
+			swatchRows.Scan(&swatchID)
+			swatch, err := GetSwatch(swatchID, tx)
 			if err != nil {
 				log.Print(err)
 				tx.Rollback()
 				return
 			}
-
-			swatch := Swatch{
-				CreationDate: creationTime,
-			}
-
-			for rows.Next() {
-				var color string
-				rows.Scan(&color)
-				swatch.Colors = append(swatch.Colors, color)
-			}
 			stream.Colors = append(stream.Colors, swatch)
 		}
+
 		tx.Commit()
 
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")

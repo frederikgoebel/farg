@@ -65,11 +65,13 @@ class Idle {
 
     if ((poseDict["leftEye"] == undefined) || (poseDict["leftAnkle"] == undefined)) {
       this.setTextCallback("Go further away!")
+      this.perfectTime = 0;
     } else if (allIn) {
       this.perfectTime += dt;
       this.setTextCallback("Perfect stay like this.")
     } else {
       this.setTextCallback("Searching for some bones..")
+      this.perfectTime = 0;
     }
 
     if (this.perfectTime > 3000) {
