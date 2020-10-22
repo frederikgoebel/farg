@@ -92,6 +92,8 @@ export abstract class BaseAnimation implements Animation {
 
       case AnimationType.Gone:
         return true;
+      case AnimationType.ScheduledForDeletion:
+        return true;
     }
     const wasFinished = this.isFinished();
     const finished = this.updateAnimation(deltaTime);
@@ -121,10 +123,11 @@ export abstract class BaseAnimation implements Animation {
   };
 
   shouldDelete = (): boolean => {
-    return (
+    const result =
       this.animationState.type === AnimationType.ScheduledForDeletion ||
-      (this.isFinished() && this.temporary)
-    );
+      (this.isFinished() && this.temporary);
+
+    return result;
   };
 
   getContext = () => this.ctx;
@@ -168,7 +171,6 @@ export abstract class BaseAnimation implements Animation {
 }
 
 export class Parallel extends BaseAnimation {
-  temporary = false;
   animations: Animation[];
   finished = false;
   constructor(...animations: Animation[]) {
@@ -211,7 +213,6 @@ export class Parallel extends BaseAnimation {
 }
 
 export class Sequential extends BaseAnimation {
-  temporary = false;
   private animations: Animation[];
   finished = false;
 
@@ -238,6 +239,8 @@ export class Sequential extends BaseAnimation {
     let i = 0;
     while (i < this.animations.length) {
       if (this.animations[i].shouldDelete()) {
+        console.log("[Sequential] Deleting:");
+        console.log(this.animations[i]);
         this.animations.splice(i, 1);
         continue;
       }
