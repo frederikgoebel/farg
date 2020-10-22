@@ -1,82 +1,72 @@
 <template>
-<div id="app" class="row" @click="addSwatch()">
-  <Mirror @swatchAdded="addSwatch" />
-  <Stream :swatches="swatches" />
+<div id="app">
+  <header v-if="showHeader" class="header container lower-line">
+    <router-link to="/" exact>
+      <div class="container">
+        <img class="logo" src="./assets/farg_logo.png">
+        <h1 class="page-title">FÄRG</h1>
+      </div>
+    </router-link>
+    <nav class="right menu-box">
+      <router-link to="/" exact>Feed</router-link>
+      <router-link to="/about">About</router-link>
+    </nav>
+  </header>
+  <router-view></router-view>
 </div>
 </template>
 
 <script>
-import axios from 'axios'
-
-import Stream from './components/Stream.vue'
-import Mirror from './components/Mirror.vue'
-let swatchAmount = 6;
-
 export default {
   name: 'app',
-  components: {
-    Stream,
-    Mirror,
-
-  },
-  data: () => ({
-    swatches: [],
-    socket: null,
-  }),
-  methods: {
-    rndColor() {
-      return '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6)
-    },
-    addSwatch(swatch) {
-      console.log(swatch)
-      if (swatch == undefined) {
-        var swatch = [];
-        for (let i = 0; i < swatchAmount; i++) {
-          swatch.push(this.rndColor());
-        }
-      }
-      this.swatches.push(swatch);
-
-      axios.post(process.env.VUE_APP_API_SERVER + '/debug/swatches', {
-        colors: swatch,
-      }).catch(function(error) {
-        // handle error
-        console.log(error);
-      })
-    },
-    receiveMsg(event) {
-      console.log(event.data);
-
-      var msg = JSON.parse(event.data);
-      console.log(msg);
-      this.swatches.push(msg.colors);
+  data: () => ({}),
+  computed: {
+    showHeader() {
+      return this.$route.path != "/presentation"
     }
-  },
-  mounted() {
-    axios.get(process.env.VUE_APP_API_SERVER + '/debug/swatches')
-      .then(response => {
-        this.swatches = response.data.colors;
-        if (this.swatches == null)
-          this.swatches = []
-        console.log("response", response);
-      })
-      .catch(function(error) {
-        // handle error
-        console.log(error);
-      })
-
-
-    this.socket = new WebSocket(process.env.VUE_APP_WS_SERVER);
-    this.socket.onmessage = this.receiveMsg;
   }
 }
 </script>
 
-<style>
-html,
-body {
+<style scoped>
+#app {
   width: 100%;
   height: 100%;
-  margin: 0;
+}
+
+.header {
+  height: 90px;
+  padding: 0 64px 0 64px;
+  width: 100%;
+  overflow: hidden;
+  min-width: min-content;
+  justify-content: space-between;
+}
+
+.page-title {
+  font-size: 1.4rem;
+  letter-spacing: 0.5rem;
+}
+
+.logo {
+  height: 2rem;
+  margin-right: 16px;
+}
+
+.menu-box>a {
+  padding-right: 12px;
+  padding-left: 12px;
+}
+
+.menu-box>a:last-child {
+  padding-right: 0;
+}
+
+.menu-box>a:first-child {
+  padding-left: 0;
+}
+
+nav .router-link-exact-active {
+  text-decoration: underline;
 }
 </style>

@@ -1,0 +1,134 @@
+body,
+html {
+  font-size: 100%;
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  background: #0F0F10;
+  color: white;
+  font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+a {
+  color: white;
+  text-decoration: none;
+}
+
+a:hover{
+  /* text-decoration: underline; */
+}
+
+h1 {
+ font-weight: bold;
+}
+
+h2 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/*Alignement*/
+
+.right{
+  float: right;
+}
+
+.left{
+  float: left;
+}
+
+/*Flex*/
+
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  align-items:  center;
+}
+
+.item-100{
+  width: 100%;
+  box-sizing: border-box;
+  flex-grow:  0;
+}
+
+.item-50{
+  width: 50%;
+  box-sizing: border-box;
+  flex-grow:  0;
+}
+
+.item-33{
+  width: 33.333333333%;
+  box-sizing: border-box;
+  flex-grow:  0;
+}
+
+.item-25{
+  width: 25%;
+  box-sizing: border-box;
+  flex-grow:  0;
+}
+
+/*Random*/
+
+.lower-line{
+  border-bottom: 1px solid white;
+}
+
+/*Padding*/
+
+.pl-64{
+  padding-left: 64px;
+}
+
+.pt-64{
+  padding-top: 64px;
+}
+
+.pr-64{
+  padding-right: 64px;
+}
+
+.pb-64{
+  padding-bottom: 64px;
+}
+
+.pl-32{
+  padding-left: 32px;
+}
+
+.pt-32{
+  padding-top: 32px;
+}
+
+.pr-32{
+  padding-right: 32px;
+}
+
+.pb-32{
+  padding-bottom: 32px;
+}
+
+.pl-16{
+  padding-left: 16px;
+}
+
+.pt-16{
+  padding-top: 16px;
+}
+
+.pr-16{
+  padding-right: 16px;
+}
+
+.pb-16{
+  padding-bottom: 16px;
+}
