@@ -6,7 +6,8 @@ export type Point2D = { x: number; y: number };
 export enum AnimationType {
   Active,
   FadeOut,
-  Gone
+  Gone,
+  ScheduledForDeletion
 }
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -20,15 +21,24 @@ namespace Anim {
     elapsedTime: number;
     duration: number;
     opacity: number;
+    removeWhenInvisible: boolean;
     easingFunction: EasingFunction;
   };
 
   export type Gone = {
     type: AnimationType.Gone;
   };
+
+  export type ScheduledForDeletion = {
+    type: AnimationType.ScheduledForDeletion;
+  };
 }
 
-type AnimationState = Anim.Active | Anim.FadeOut | Anim.Gone;
+type AnimationState =
+  | Anim.Active
+  | Anim.FadeOut
+  | Anim.Gone
+  | Anim.ScheduledForDeletion;
 
 export interface Animation {
   animationState: AnimationState;
@@ -40,6 +50,8 @@ export interface Animation {
 
   fadeOut: (duration: number, f?: EasingFunction) => void;
   getContext(): CanvasRenderingContext2D;
+
+  shouldDelete(): boolean;
 }
 
 export abstract class BaseAnimation implements Animation {
@@ -69,8 +81,12 @@ export abstract class BaseAnimation implements Animation {
           0
         );
 
-        if (this.animationState.opacity === 0)
-          this.animationState = { type: AnimationType.Gone };
+        if (this.animationState.opacity === 0) {
+          this.animationState = this.animationState.removeWhenInvisible
+            ? { type: AnimationType.ScheduledForDeletion }
+            : { type: AnimationType.Gone };
+        }
+
         break;
       }
 
@@ -87,16 +103,28 @@ export abstract class BaseAnimation implements Animation {
     return finished;
   };
 
-  fadeOut = (duration: number, f: EasingFunction = (x: number) => x) => {
+  fadeOut = (
+    duration: number,
+    f: EasingFunction = (x: number) => x,
+    removeWhenInvisible = true
+  ) => {
     if (this.animationState.type === AnimationType.Gone) return;
 
     this.animationState = {
       type: AnimationType.FadeOut,
+      removeWhenInvisible,
       elapsedTime: 0,
       duration,
       opacity: 1,
       easingFunction: f
     };
+  };
+
+  shouldDelete = (): boolean => {
+    return (
+      this.animationState.type === AnimationType.ScheduledForDeletion ||
+      (this.isFinished() && this.temporary)
+    );
   };
 
   getContext = () => this.ctx;
@@ -156,13 +184,14 @@ export class Parallel extends BaseAnimation {
 
     let i = 0;
     while (i < this.animations.length) {
-      const finished = this.animations[i].update(delta);
-      if (finished && this.animations[i].temporary) {
+      if (this.animations[i].shouldDelete()) {
         this.animations.splice(i, 1);
-      } else {
-        allFinished = allFinished && finished;
-        ++i;
+        continue;
       }
+
+      const finished = this.animations[i].update(delta);
+      allFinished = allFinished && finished;
+      ++i;
     }
 
     // const wasFinished = this.finished;
@@ -203,21 +232,18 @@ export class Sequential extends BaseAnimation {
     this.animations.push(animation);
   };
 
-  protected updateAnimationSequential = (deltaTime: number): boolean => {
-    return this.updateAnimation(deltaTime);
-  };
-
   updateAnimation = (delta: number) => {
     if (this.animations.length === 0) return true;
 
     let i = 0;
     while (i < this.animations.length) {
-      if (this.animations[i].update(delta)) {
-        if (this.animations[i].temporary) {
-          this.animations.splice(i, 1);
-        } else {
-          ++i;
-        }
+      if (this.animations[i].shouldDelete()) {
+        this.animations.splice(i, 1);
+        continue;
+      }
+      const finished = this.animations[i].update(delta);
+      if (finished) {
+        ++i;
       } else {
         this.finished = false;
         return this.isFinished();

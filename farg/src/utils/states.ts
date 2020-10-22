@@ -39,12 +39,11 @@ import {
   highlightPalette
 } from "./animation/paletteAnimation";
 import Rectangle from "./animation/rectangleAnimation";
-import { RectAreaLight } from "three";
 
 const frontColor = "#F7566A";
 const backColor = "#023F92";
 
-const __DEBUG_MODE = true;
+const __DEBUG_MODE = false;
 
 class Idle {
   shapeshifter: any;
@@ -308,7 +307,7 @@ class ColorSteal {
 
       this.swatch = swatches.map(s => s.prominentColor);
 
-      const DURATION_MS = 3000;
+      const DURATION_MS = 1000;
       const lineAnimations = this.boundingBoxes.map(bb => {
         const topHorizontal = new LineAnimation(
           drawCtx,
@@ -388,15 +387,27 @@ class ColorSteal {
 
           const highlight = highlightPalette({
             animation,
-            duration: 5000,
+            duration: 4500,
             easingFunction: easing.easeOutCubic
           });
 
-          const rectangleAnimation = Rectangle.scale(
-            drawCtx,
-            1000,
-            rectangleSize
-          ).translate(1000, { ...destination });
+          const scaleConfig = {
+            ctx: drawCtx,
+            duration: 1400,
+            size: rectangleSize,
+            easingFunction: easing.easeInOutQuart
+          };
+
+          const translateConfig = {
+            duration: 1200,
+            to: { ...destination },
+            easingFunction: easing.easeOutQuart
+          };
+
+          const rectangleAnimation = Rectangle.scale(scaleConfig).translate(
+            translateConfig
+          );
+
           destination.y += rectangleSize.height;
 
           highlight.onFinish = () => {
@@ -410,7 +421,7 @@ class ColorSteal {
 
             rectangleAnimation.setRectangle(highlightedBox);
             rectangleAnimation.materialize();
-            highlight.temporary = true;
+            highlight.fadeOut(1000, easing.easeOutCubic);
           };
 
           return Sequential.create(highlight, rectangleAnimation);

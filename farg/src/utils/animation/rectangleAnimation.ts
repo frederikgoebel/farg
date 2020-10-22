@@ -67,18 +67,25 @@ export default class Rectangle {
     this.height = height;
   }
 
-  static scale(
-    ctx: CanvasRenderingContext2D,
-    duration: number,
-    size: Size
-  ): RectangleAnimations {
+  static scale({
+    ctx,
+    duration,
+    size,
+    easingFunction
+  }: {
+    ctx: CanvasRenderingContext2D;
+    duration: number;
+    size: Size;
+    easingFunction?: EasingFunction;
+  }): RectangleAnimations {
     const thunk: AnimationThunk = rectangle => {
       // eslint-disable-next-line @typescript-eslint/no-use-before-define
       return new Scale({
         ctx,
         rectangle,
         duration,
-        toSize: size
+        toSize: size,
+        easingFunction
       });
     };
 
@@ -272,28 +279,46 @@ class RectangleAnimations extends Sequential {
     this.animationThunks.push(thunk);
   };
 
-  scale = (duration: number, size: Size): RectangleAnimations => {
+  scale = ({
+    duration,
+    size,
+    easingFunction
+  }: {
+    duration: number;
+    size: Size;
+    easingFunction?: EasingFunction;
+  }): RectangleAnimations => {
     this.addThunk(
       rectangle =>
         new Scale({
           ctx: this.ctx,
           rectangle,
           duration,
-          toSize: size
+          toSize: size,
+          easingFunction
         })
     );
 
     return this;
   };
 
-  translate = (duration: number, to: Point2D): RectangleAnimations => {
+  translate = ({
+    duration,
+    to,
+    easingFunction
+  }: {
+    duration: number;
+    to: Point2D;
+    easingFunction?: EasingFunction;
+  }): RectangleAnimations => {
     this.addThunk(
       rectangle =>
         new Translate({
           ctx: this.ctx,
           rectangle,
           duration,
-          to
+          to,
+          easingFunction
         })
     );
 
