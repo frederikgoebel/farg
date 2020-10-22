@@ -44,7 +44,7 @@ import { RectAreaLight } from "three";
 const frontColor = "#F7566A";
 const backColor = "#023F92";
 
-const __DEBUG_MODE = false;
+const __DEBUG_MODE = true;
 
 class Idle {
   shapeshifter: any;
@@ -388,19 +388,21 @@ class ColorSteal {
 
           const highlight = highlightPalette({
             animation,
-            duration: 5000,
+            // duration: 5000,
+            duration: 1000,
             easingFunction: easing.easeOutCubic
           });
 
           const rectangleAnimation = Rectangle.scale(
             drawCtx,
-            2000,
+            1000,
             rectangleSize
-          ).translate(2000, destination);
+          ).translate(1000, destination);
           destination.y += rectangleSize.height;
 
           highlight.onFinish = () => {
             const highlightedBox = new Rectangle(
+              swatches[index].prominentColor,
               highlight.highlightPosition().x,
               highlight.highlightPosition().y,
               32,
@@ -408,6 +410,8 @@ class ColorSteal {
             );
 
             rectangleAnimation.setRectangle(highlightedBox);
+            rectangleAnimation.materialize();
+            highlight.temporary = true;
           };
 
           return Sequential.create(highlight, rectangleAnimation);

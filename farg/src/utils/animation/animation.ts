@@ -203,6 +203,10 @@ export class Sequential extends BaseAnimation {
     this.animations.push(animation);
   };
 
+  protected updateAnimationSequential = (deltaTime: number): boolean => {
+    return this.updateAnimation(deltaTime);
+  };
+
   updateAnimation = (delta: number) => {
     if (this.animations.length === 0) return true;
 

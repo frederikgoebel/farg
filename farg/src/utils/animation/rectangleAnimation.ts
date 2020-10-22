@@ -226,8 +226,8 @@ export class Translate extends RectangleAnimation {
 }
 
 class RectangleAnimations extends Sequential {
-  animationThunks: AnimationThunk[] = [];
-  rectangle?: Rectangle;
+  private animationThunks: AnimationThunk[] = [];
+  private rectangle?: Rectangle;
   constructor(
     ctx: CanvasRenderingContext2D,
     thunk: AnimationThunk,
@@ -239,7 +239,16 @@ class RectangleAnimations extends Sequential {
     this.addThunk(thunk);
   }
 
-  runThunks = (): void => {
+  /**
+    Run the thunks, populating the sequential with animations stored in the thunks.
+  */
+  materialize = () => {
+    if (this.animationThunks.length !== 0) {
+      this.runThunks();
+    }
+  };
+
+  private runThunks = (): void => {
     if (this.rectangle === undefined) {
       console.warn(
         "[RectangleAnimations] Attempted to update without a rectangle."
@@ -252,14 +261,6 @@ class RectangleAnimations extends Sequential {
     );
 
     this.animationThunks = [];
-  };
-
-  updateAnimation = (deltaTime: number): boolean => {
-    if (this.animationThunks.length !== 0) {
-      this.runThunks();
-    }
-
-    return super.updateAnimation(deltaTime);
   };
 
   setRectangle = (rectangle: Rectangle) => {

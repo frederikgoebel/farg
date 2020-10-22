@@ -14,7 +14,7 @@ import * as posenet from "@tensorflow-models/posenet";
 import * as mirror from "../utils/mirror";
 import StateMachine from "../utils/statemachine";
 
-const __DEBUG_MODE = false;
+const __DEBUG_MODE = true;
 
 export default {
   data: () => ({
