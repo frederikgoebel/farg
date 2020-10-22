@@ -36,12 +36,15 @@ abstract class RectangleAnimation extends BaseAnimation {
   }
 
   draw = () => {
+    this.ctx.save();
+    this.ctx.fillStyle = this.rectangle.color;
     this.fillRect(
       this.rectangle.x,
       this.rectangle.y,
       this.rectangle.width,
       this.rectangle.height
     );
+    this.ctx.restore();
   };
 
   isFinished = (): boolean => {
@@ -54,8 +57,10 @@ export default class Rectangle {
   y: number;
   width: number;
   height: number;
+  color: string;
 
-  constructor(x = 0, y = 0, width = 0, height = 0) {
+  constructor(color: string, x = 0, y = 0, width = 0, height = 0) {
+    this.color = color;
     this.x = x;
     this.y = y;
     this.width = width;
@@ -141,9 +146,9 @@ interface ScaleArgs extends RectangleAnimationArgs {
   toSize: Size;
 }
 export class Scale extends RectangleAnimation {
-  fromSize?: Size;
+  fromSize: Size;
   toSize: Size;
-  center?: Point2D;
+  center: Point2D;
 
   constructor({ ctx, toSize, duration, rectangle, easingFunction }: ScaleArgs) {
     super({ ctx, rectangle, duration, easingFunction });
@@ -151,17 +156,20 @@ export class Scale extends RectangleAnimation {
     this.duration = duration;
     this.toSize = toSize;
     this.rectangle = rectangle;
+
+    this.fromSize = {
+      width: this.rectangle.width,
+      height: this.rectangle.height
+    };
+
+    this.center = {
+      x: this.rectangle.x + this.rectangle.width / 2,
+      y: this.rectangle.y + this.rectangle.height / 2
+    };
   }
 
   updateAnimation = (deltaTime: number): boolean => {
     if (this.elapsedTime === this.duration) return true;
-    if (this.fromSize === undefined) this.initialize();
-    if (this.fromSize === undefined || this.center === undefined) {
-      console.warn(
-        "[Scale Rectangle: This should never happen] this.fromSize === undefined || this.center === undefined"
-      );
-      return false;
-    }
 
     this.elapsedTime = Math.min(this.elapsedTime + deltaTime, this.duration);
 
@@ -180,25 +188,13 @@ export class Scale extends RectangleAnimation {
 
     return false;
   };
-
-  initialize = () => {
-    this.fromSize = {
-      width: this.rectangle.width,
-      height: this.rectangle.height
-    };
-
-    this.center = {
-      x: this.rectangle.x + this.rectangle.width / 2,
-      y: this.rectangle.y + this.rectangle.height / 2
-    };
-  };
 }
 
 interface TranslateArgs extends RectangleAnimationArgs {
   to: Point2D;
 }
 export class Translate extends RectangleAnimation {
-  from?: Point2D;
+  from: Point2D;
   to: Point2D;
 
   constructor({ ctx, duration, to, rectangle, easingFunction }: TranslateArgs) {
@@ -206,17 +202,15 @@ export class Translate extends RectangleAnimation {
 
     this.duration = duration;
     this.to = to;
+
+    this.from = {
+      x: this.rectangle.x,
+      y: this.rectangle.y
+    };
   }
 
   updateAnimation = (deltaTime: number): boolean => {
     if (this.elapsedTime === this.duration) return true;
-    if (this.from === undefined) this.initialize();
-    if (this.from === undefined) {
-      console.warn(
-        "[Translate Rectangle: This should never happen] this.from === undefined"
-      );
-      return false;
-    }
 
     this.elapsedTime = Math.min(this.elapsedTime + deltaTime, this.duration);
 
@@ -228,13 +222,6 @@ export class Translate extends RectangleAnimation {
     this.rectangle.y = y;
 
     return false;
-  };
-
-  initialize = () => {
-    this.from = {
-      x: this.rectangle.x,
-      y: this.rectangle.y
-    };
   };
 }
 
@@ -267,12 +254,12 @@ class RectangleAnimations extends Sequential {
     this.animationThunks = [];
   };
 
-  update = (deltaTime: number): boolean => {
+  updateAnimation = (deltaTime: number): boolean => {
     if (this.animationThunks.length !== 0) {
       this.runThunks();
     }
 
-    return super.update(deltaTime);
+    return super.updateAnimation(deltaTime);
   };
 
   setRectangle = (rectangle: Rectangle) => {
