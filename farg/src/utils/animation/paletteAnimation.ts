@@ -189,7 +189,10 @@ export class HighlightPaletteAnimation extends BaseAnimation {
   };
 
   draw = () => {
+    console.log("Draw HighlightPaletteAnimation before");
     if (!this.animation.isFinished()) return;
+
+    console.log("Draw HighlightPaletteAnimation after");
 
     if (this.state.state === HighlightPatternState.Focus) {
       const oldFillStyle = this.ctx.fillStyle;

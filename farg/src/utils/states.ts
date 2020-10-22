@@ -375,58 +375,63 @@ class ColorSteal {
         y: 0
       };
 
-      const paletteAnimations: Animation[] = this.boundingBoxes.map(
-        (bb, index) => {
-          const animation = new PaletteAnimation({
-            ctx: drawCtx,
-            swatch: swatches[index],
-            topLeft: { x: bb.endX + 20, y: bb.startY - 20 },
-            boxSize: 32,
-            duration: DURATION_MS
-          });
+      let boxes: BoundingBox[];
+      if (__DEBUG_MODE) {
+        boxes = this.boundingBoxes.slice(0, 1);
+      } else {
+        boxes = this.boundingBoxes;
+      }
 
-          const highlight = highlightPalette({
-            animation,
-            duration: 4500,
-            easingFunction: easing.easeOutCubic
-          });
+      const paletteAnimations: Animation[] = boxes.map((bb, index) => {
+        const animation = new PaletteAnimation({
+          ctx: drawCtx,
+          swatch: swatches[index],
+          topLeft: { x: bb.endX + 20, y: bb.startY - 20 },
+          boxSize: 32,
+          duration: DURATION_MS
+        });
 
-          const scaleConfig = {
-            ctx: drawCtx,
-            duration: 1400,
-            size: rectangleSize,
-            easingFunction: easing.easeInOutQuart
-          };
+        const highlight = highlightPalette({
+          animation,
+          duration: 4500,
+          easingFunction: easing.easeOutCubic
+        });
 
-          const translateConfig = {
-            duration: 1200,
-            to: { ...destination },
-            easingFunction: easing.easeOutQuart
-          };
+        const scaleConfig = {
+          ctx: drawCtx,
+          duration: 1400,
+          size: rectangleSize,
+          easingFunction: easing.easeInOutQuart
+        };
 
-          const rectangleAnimation = Rectangle.scale(scaleConfig).translate(
-            translateConfig
+        const translateConfig = {
+          duration: 1200,
+          to: { ...destination },
+          easingFunction: easing.easeOutQuart
+        };
+
+        const rectangleAnimation = Rectangle.scale(scaleConfig).translate(
+          translateConfig
+        );
+
+        destination.y += rectangleSize.height;
+
+        highlight.onFinish = () => {
+          const highlightedBox = new Rectangle(
+            swatches[index].prominentColor,
+            highlight.highlightPosition().x,
+            highlight.highlightPosition().y,
+            32,
+            32
           );
 
-          destination.y += rectangleSize.height;
+          rectangleAnimation.setRectangle(highlightedBox);
+          rectangleAnimation.materialize();
+          highlight.fadeOut(1000, easing.easeOutCubic);
+        };
 
-          highlight.onFinish = () => {
-            const highlightedBox = new Rectangle(
-              swatches[index].prominentColor,
-              highlight.highlightPosition().x,
-              highlight.highlightPosition().y,
-              32,
-              32
-            );
-
-            rectangleAnimation.setRectangle(highlightedBox);
-            rectangleAnimation.materialize();
-            highlight.fadeOut(1000, easing.easeOutCubic);
-          };
-
-          return Sequential.create(highlight, rectangleAnimation);
-        }
-      );
+        return Sequential.create(highlight, rectangleAnimation);
+      });
 
       this.animation = Sequential.create(
         new Parallel(...lineAnimations),
@@ -439,7 +444,7 @@ class ColorSteal {
       if (this.deltaTime && this.deltaTime !== 0)
         this.animation.update(this.deltaTime);
 
-      if (this.animation.isFinished()) {
+      if (this.animation.isFinished() && !__DEBUG_MODE) {
         this.colorCallback(this.swatch);
         this.FIRST_TIME = true;
 
