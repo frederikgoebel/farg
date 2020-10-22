@@ -358,7 +358,7 @@ class ColorSteal {
           drawCtx,
           { x: from[0], y: from[1] },
           { x: to[0], y: to[1] },
-          1000
+          1500
         );
         animation.setName("LineAnimation");
         return animation;
@@ -425,14 +425,14 @@ class ColorSteal {
 
           const scaleConfig = {
             ctx: drawCtx,
-            duration: 1400,
+            duration: 1000,
             size: rectangleSize,
             easingFunction: easing.easeInOutQuart,
             name: "ScaleAnimation"
           };
 
           const translateConfig = {
-            duration: 1200,
+            duration: 1300,
             to: { ...destination },
             easingFunction: easing.easeOutQuart,
             name: "TranslateAnimation"
@@ -456,7 +456,7 @@ class ColorSteal {
             );
 
             rectangleAnimation.setRectangle(highlightedBox);
-            highlight.fadeOut(1000, easing.easeOutCubic);
+            highlight.fadeOut(500, easing.easeOutCubic);
           };
 
           const fullPaletteAnimation = Sequential.create(
