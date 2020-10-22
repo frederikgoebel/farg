@@ -53,6 +53,7 @@ const shapeshifter = new Shapeshifter({
 
 class BeforeLoad {
   time: number;
+  simplex: SimplexNoise;
   constructor() {
     this.time = 0
     this.simplex = new SimplexNoise()
@@ -97,8 +98,10 @@ class BeforeLoad {
 }
 
 class Idle {
+  time: number;
   setTextCallback: any;
   perfectTime: number;
+  simplex: SimplexNoise;
   constructor(setTextCallback) {
     this.setTextCallback = setTextCallback;
     this.perfectTime = 0;
