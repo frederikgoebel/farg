@@ -1,5 +1,5 @@
 <template>
-<div class="mirror" v-if="!(isSmallScreen && !isSupported)">
+<div class="mirror">
   <div class="item-100 beforeLoad" v-if="!isSupported">
     <p>Please use <a target="_blank" href="https://www.google.com/chrome/">Chrome</a> to sample your colors.</p>
   </div>
@@ -43,9 +43,6 @@ export default {
       this.loadMirror()
   },
   computed: {
-    isSmallScreen() {
-      return window.matchMedia("max-width: 680px")
-    },
     isSupported() {
       var ua = navigator.userAgent.toLowerCase();
       if (ua.indexOf('safari') != -1) {
@@ -158,6 +155,10 @@ export default {
   .mirror {
     width: 100%;
   }
+}
+
+.hide {
+  display: none;
 }
 
 .canvas {

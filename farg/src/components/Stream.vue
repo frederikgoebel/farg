@@ -1,6 +1,6 @@
 <template>
 <transition-group name="stream" tag="div" id="color-stream" class="row">
-  <Mirror v-if="showMirror" key="mirror" @swatchAdded="addSwatch" :autoLoad="autoLoadMirror" />
+  <Mirror v-if="showMirror && !hideMirror" key="mirror" @swatchAdded="addSwatch" :autoLoad="autoLoadMirror" />
   <div key="loadingMsg" v-if="isLoading">Loading ...</div>
   <div v-else v-for="swatch in swatchesToShow" :key="`swatch-${swatch.id}`" class="color-column" :class="{ squash: preview, large: selectedSwatch == swatch.id }">
     <div v-for="(color, colorIndex) in swatch.colors" :key="`color-${colorIndex}`" class="color-field" :style="{ background: color }" @click="selectSwatch(swatch.id)">
@@ -33,7 +33,8 @@ export default {
     swatches: [],
     selectedSwatch: null,
     creatorID: "unknown",
-    tmpIDs: 0
+    tmpIDs: 0,
+    hideMirror: false,
   }),
   components: {
     Mirror
@@ -50,7 +51,22 @@ export default {
   computed: {
     swatchesToShow() {
       return this.swatches.slice().reverse();
-    }
+    },
+    hideMirror() {
+      return this.isSmallScreen && !this.isSupported
+    },
+    isSmallScreen() {
+      return window.matchMedia("max-width: 680px")
+    },
+    isSupported() {
+      var ua = navigator.userAgent.toLowerCase();
+      if (ua.indexOf('safari') != -1) {
+        if (ua.indexOf('chrome') == -1) {
+          return false
+        }
+      }
+      return true
+    },
   },
   methods: {
     rgbaToHex,
