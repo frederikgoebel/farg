@@ -1,7 +1,7 @@
-import { BaseAnimation, Point2D, Sequential } from "./animation";
+import { BaseAnimation, Point2D, BaseSequential, Animation } from "./animation";
 import { EasingFunction, denormalize } from "./easing";
 
-type AnimationThunk = (rectangle: Rectangle) => RectangleAnimation;
+type RectangleThunk = (rectangle: Rectangle) => RectangleAnimation;
 
 type Size = {
   width: number;
@@ -76,7 +76,7 @@ export default class Rectangle {
     easingFunction?: EasingFunction;
     name?: string;
   }): RectangleAnimations {
-    const thunk: AnimationThunk = rectangle => {
+    const thunk: RectangleThunk = rectangle => {
       // eslint-disable-next-line @typescript-eslint/no-use-before-define
       const animation = new Scale({
         ctx,
@@ -101,7 +101,7 @@ export default class Rectangle {
     duration: number,
     to: Point2D
   ): RectangleAnimations {
-    const thunk: AnimationThunk = rectangle => {
+    const thunk: RectangleThunk = rectangle => {
       // eslint-disable-next-line @typescript-eslint/no-use-before-define
       return new Translate({
         ctx,
@@ -119,7 +119,7 @@ export default class Rectangle {
     duration: number,
     size: Size
   ): RectangleAnimations => {
-    const thunk: AnimationThunk = rectangle => {
+    const thunk: RectangleThunk = rectangle => {
       // eslint-disable-next-line @typescript-eslint/no-use-before-define
       return new Scale({
         ctx,
@@ -138,7 +138,7 @@ export default class Rectangle {
     duration: number,
     to: Point2D
   ): RectangleAnimations => {
-    const thunk: AnimationThunk = rectangle => {
+    const thunk: RectangleThunk = rectangle => {
       // eslint-disable-next-line @typescript-eslint/no-use-before-define
       return new Translate({
         ctx,
@@ -156,9 +156,8 @@ interface ScaleArgs extends RectangleAnimationArgs {
   toSize: Size;
 }
 export class Scale extends RectangleAnimation {
-  fromSize: Size;
   toSize: Size;
-  center: Point2D;
+  fromSize: Size;
 
   constructor({ ctx, toSize, duration, rectangle, easingFunction }: ScaleArgs) {
     super({ ctx, rectangle, duration, easingFunction });
@@ -170,11 +169,6 @@ export class Scale extends RectangleAnimation {
     this.fromSize = {
       width: this.rectangle.width,
       height: this.rectangle.height
-    };
-
-    this.center = {
-      x: this.rectangle.x + this.rectangle.width / 2,
-      y: this.rectangle.y + this.rectangle.height / 2
     };
   }
 
@@ -198,6 +192,12 @@ export class Scale extends RectangleAnimation {
 
     if (this.elapsedTime >= this.duration) {
       this.setFinished(true);
+      console.log(
+        "When scale finished >> x: " +
+          this.rectangle.x +
+          ", y: " +
+          this.rectangle.y
+      );
     }
 
     return this.isFinished();
@@ -215,12 +215,16 @@ export class Translate extends RectangleAnimation {
     super({ ctx, rectangle, duration, easingFunction });
 
     this.duration = duration;
-    this.to = to;
-
     this.from = {
       x: this.rectangle.x,
       y: this.rectangle.y
     };
+
+    this.to = to;
+
+    console.log(
+      "Translate moves from >> x: " + this.from.x + ", y: " + this.from.y
+    );
   }
 
   updateAnimation = (deltaTime: number): boolean => {
@@ -243,12 +247,14 @@ export class Translate extends RectangleAnimation {
   };
 }
 
-class RectangleAnimations extends Sequential {
-  private animationThunks: AnimationThunk[] = [];
+class RectangleAnimations extends BaseSequential {
+  private animations: Animation[] = [];
+  private animationThunks: RectangleThunk[] = [];
+
   private rectangle?: Rectangle;
   constructor(
     ctx: CanvasRenderingContext2D,
-    thunk: AnimationThunk,
+    thunk: RectangleThunk,
     rectangle?: Rectangle
   ) {
     super(ctx);
@@ -257,28 +263,26 @@ class RectangleAnimations extends Sequential {
     this.addThunk(thunk);
   }
 
-  /**
-    Run the thunks, populating the sequential with animations stored in the thunks.
-  */
-  materialize = () => {
-    if (this.animationThunks.length !== 0) {
-      this.runThunks();
-    }
+  size = (): number => this.animations.length + this.animationThunks.length;
+
+  removeAtIndex = (index: number): void => {
+    this.animations.splice(index, 1);
   };
 
-  private runThunks = (): void => {
-    if (this.rectangle === undefined) {
-      console.warn(
-        "[RectangleAnimations] Attempted to update without a rectangle."
-      );
-      return;
+  get = (index: number): Animation => {
+    while (index >= this.animations.length) {
+      this.materializeThunk();
     }
+    return this.animations[index];
+  };
 
-    this.animationThunks.forEach(createAnimation =>
-      this.add(createAnimation(this.rectangle as Rectangle))
-    );
+  add = (animation: Animation): void => {
+    this.animations.push(animation);
+  };
 
-    this.animationThunks = [];
+  private materializeThunk = () => {
+    this.add(this.animationThunks[0](this.rectangle as Rectangle));
+    this.animationThunks.splice(0, 1);
   };
 
   setRectangle = (rectangle: Rectangle) => {
@@ -286,7 +290,7 @@ class RectangleAnimations extends Sequential {
     this.rectangle = rect;
   };
 
-  private addThunk = (thunk: AnimationThunk) => {
+  private addThunk = (thunk: RectangleThunk) => {
     this.animationThunks.push(thunk);
   };
 

@@ -239,12 +239,7 @@ export class Parallel extends BaseAnimation {
       ++i;
     }
 
-    // const wasFinished = this.finished;
     this.setFinished(allFinished);
-    // if (!wasFinished && this.finished) {
-    //   console.log("Parallel finished");
-    // }
-
     return this.isFinished();
   };
 
@@ -253,7 +248,60 @@ export class Parallel extends BaseAnimation {
   };
 }
 
-export class Sequential extends BaseAnimation {
+export abstract class BaseSequential<
+  A extends Animation = Animation
+> extends BaseAnimation {
+  abstract size(): number;
+  abstract removeAtIndex(index: number): void;
+  abstract get(index: number): A;
+  abstract add(animation: A): void;
+  empty = (): boolean => this.size() === 0;
+
+  constructor(ctx: CanvasRenderingContext2D) {
+    super(ctx);
+  }
+
+  updateAnimation = (delta: number) => {
+    const { size, get, removeAtIndex, setFinished, isFinished } = this;
+    if (size() === 0) return true;
+
+    let i = 0;
+    while (i < size()) {
+      const animation = get(i);
+      if (animation.shouldDelete()) {
+        console.log("[Sequential] Deleting " + animation.identifier);
+        removeAtIndex(i);
+        continue;
+      }
+      const finished = animation.update(delta);
+      if (finished) {
+        ++i;
+      } else {
+        setFinished(false);
+        return isFinished();
+      }
+    }
+
+    setFinished(true);
+    return isFinished();
+  };
+
+  draw = () => {
+    const { empty, size, get } = this;
+    if (empty()) return;
+
+    let done = false;
+    let i = 0;
+    while (!done) {
+      const animation = get(i);
+      animation.render();
+      ++i;
+      done = !animation.isFinished() || i == size();
+    }
+  };
+}
+
+export class Sequential extends BaseSequential {
   private animations: Animation[];
 
   constructor(ctx: CanvasRenderingContext2D) {
@@ -262,54 +310,24 @@ export class Sequential extends BaseAnimation {
     this.animations = [];
   }
 
+  size = (): number => this.animations.length;
+
+  removeAtIndex = (index: number): void => {
+    this.animations.splice(index, 1);
+  };
+
+  get = (index: number): Animation => {
+    return this.animations[index];
+  };
+
+  add = (animation: Animation): void => {
+    this.animations.push(animation);
+  };
+
   static create(...animations: Animation[]): Sequential {
     const result = new Sequential(animations[0].getContext());
     result.animations = animations;
 
     return result;
   }
-
-  add = (animation: Animation) => {
-    this.animations.push(animation);
-  };
-
-  updateAnimation = (delta: number) => {
-    if (this.animations.length === 0) return true;
-
-    let i = 0;
-    while (i < this.animations.length) {
-      if (this.animations[i].shouldDelete()) {
-        console.log("[Sequential] Deleting " + this.animations[i].identifier);
-        this.animations.splice(i, 1);
-        continue;
-      }
-      const finished = this.animations[i].update(delta);
-      if (finished) {
-        ++i;
-      } else {
-        this.setFinished(false);
-        return this.isFinished();
-      }
-    }
-
-    // const wasFinished = this.finished;
-    this.setFinished(true);
-    // if (!wasFinished && this.finished) {
-    //   console.log("Sequential finished");
-    // }
-    return this.isFinished();
-  };
-
-  draw = () => {
-    if (this.animations.length === 0) return;
-
-    let done = false;
-    let i = 0;
-    while (!done) {
-      const animation = this.animations[i];
-      animation.render();
-      ++i;
-      done = !animation.isFinished() || i == this.animations.length;
-    }
-  };
 }

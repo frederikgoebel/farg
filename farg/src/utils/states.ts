@@ -414,7 +414,6 @@ class ColorSteal {
             );
 
             rectangleAnimation.setRectangle(highlightedBox);
-            rectangleAnimation.materialize();
             highlight.fadeOut(1000, easing.easeOutCubic);
           };
 
