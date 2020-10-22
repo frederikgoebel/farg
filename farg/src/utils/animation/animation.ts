@@ -101,7 +101,6 @@ export abstract class BaseAnimation implements Animation {
       this.onFinish?.();
     }
 
-    this.draw();
     return finished;
   };
 
@@ -264,6 +263,7 @@ export class Sequential extends BaseAnimation {
   draw = () => {
     if (this.animations.length === 0) return;
     this.animations[0].draw();
+    if (!this.animations[0].isFinished()) return;
 
     let i = 1;
     while (i < this.animations.length && this.animations[i].isFinished()) {

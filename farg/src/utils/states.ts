@@ -441,8 +441,10 @@ class ColorSteal {
     }
 
     if (this.animation) {
-      if (this.deltaTime && this.deltaTime !== 0)
+      if (this.deltaTime && this.deltaTime !== 0) {
         this.animation.update(this.deltaTime);
+        this.animation.draw();
+      }
 
       if (this.animation.isFinished() && !__DEBUG_MODE) {
         this.colorCallback(this.swatch);
