@@ -4,8 +4,9 @@ import * as stateClasses from "./states";
 class StateMachine {
   // The colorCallback is called once a new swatch was found
   constructor(colorCallback, setTextCallback) {
-    this.state = "idle";
+    this.state = "beforeLoad";
     this.states = {
+      beforeLoad: new stateClasses.BeforeLoad(),
       idle: new stateClasses.Idle(setTextCallback),
       found: new stateClasses.Found(
         shouldTick => (this.TICK_ENABLED = shouldTick)

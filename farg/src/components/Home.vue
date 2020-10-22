@@ -1,7 +1,7 @@
 <template>
 <div class="item-100 container fill-height">
   <div class="feature-stream lower-line">
-    <Stream streamID="debug" />
+    <Stream streamID="debug" showMirror />
     <!-- <TitleCard>
       <BlinkyDot />Live from <b>Visual Arena</b>
     </TitleCard> -->
