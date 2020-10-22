@@ -144,12 +144,18 @@ function saveVideoToBuffer(video, buffer) {
   buffer.restore();
 }
 
-async function getPose(net, video) {
-  const pose = await net.estimateSinglePose(video, {
+// TODO this is very hacky. make a nice class <3
+let pose = undefined
+
+async function updatePose(net, video) {
+  pose = await net.estimateSinglePose(video, {
     flipHorizontal: false,
     decodingMethod: "single-person",
   });
   pose.keypoints = pose.keypoints.filter(({score}) => score > 0.6);
+}
+
+function getPose() {
   return pose;
 }
 
@@ -165,4 +171,4 @@ for (let i = 0; i < numbers.length; i += 2) {
   });
 }
 
-export { setupCamera, destructCamera, setupVideoBuffer, saveVideoToBuffer, getPose, CollisionBody, drawKeypoints, usedKeyPointParts };
+export { setupCamera, destructCamera, setupVideoBuffer, saveVideoToBuffer, getPose, updatePose, CollisionBody, drawKeypoints, usedKeyPointParts };
