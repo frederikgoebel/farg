@@ -1,18 +1,18 @@
 <template>
-<div class="mirror">
-  <div class="callout">{{callout}}</div>
-  <canvas class="canvas" ref="canvas"></canvas>
-  <video ref="video" playsinline autoplay style="display: none;"> </video>
-  <canvas ref="videoBuffer" style="display: none;"></canvas>
-</div>
+  <div class="mirror">
+    <div class="callout">{{ callout }}</div>
+    <canvas class="canvas" ref="canvas"></canvas>
+    <video ref="video" playsinline autoplay style="display: none;"></video>
+    <canvas ref="videoBuffer" style="display: none;"></canvas>
+  </div>
 </template>
 
 <script>
-import TitleCard from './TitleCard'
-import * as tf from '@tensorflow/tfjs';
-import * as posenet from '@tensorflow-models/posenet';
-import * as mirror from '../utils/mirror';
-import StateMachine from '../utils/statemachine';
+import TitleCard from "./TitleCard";
+import * as tf from "@tensorflow/tfjs";
+import * as posenet from "@tensorflow-models/posenet";
+import * as mirror from "../utils/mirror";
+import StateMachine from "../utils/statemachine";
 
 const __DEBUG_MODE = false;
 
@@ -21,20 +21,29 @@ export default {
     renderLayer: null,
     stateMachine: null,
     net: null,
-    callout: "",
+    callout: ""
   }),
   methods: {
     swatchAdded(swatch) {
-        this.$emit("swatchAdded", swatch);
+      this.$emit("swatchAdded", swatch);
     },
     draw() {
       this.resize(this.$refs.canvas);
       if (__DEBUG_MODE) {
-        this.stateMachine.tick(this.$refs.canvas.getContext("2d"), null, null, null).then(() => window.requestAnimationFrame(this.draw));
+        this.stateMachine
+          .tick(this.$refs.canvas.getContext("2d"), null, null, null)
+          .then(() => window.requestAnimationFrame(this.draw));
       } else {
-        this.stateMachine.tick(this.$refs.canvas.getContext("2d"), this.$refs.video, this.$refs.videoBuffer.getContext("2d"), this.net).then(() => {
-          window.requestAnimationFrame(this.draw);
-        });
+        this.stateMachine
+          .tick(
+            this.$refs.canvas.getContext("2d"),
+            this.$refs.video,
+            this.$refs.videoBuffer.getContext("2d"),
+            this.net
+          )
+          .then(() => {
+            window.requestAnimationFrame(this.draw);
+          });
       }
     },
     resize(canvas) {
@@ -49,43 +58,48 @@ export default {
     },
     setText(txt) {
       this.callout = txt;
-    },
+    }
   },
   mounted() {
     this.stateMachine = new StateMachine(this.swatchAdded, this.setText);
-    mirror.setupCamera(this.$refs.video).then((stopFn) => {
-      mirror.setupVideoBuffer(this.$refs.videoBuffer, this.$refs.video)
-      this.renderLayer = this.$refs.canvas.getContext("2d");
-      tf.enableProdMode()
-      posenet.load(
-        //   {
-        //   architecture: 'MobileNetV1',
-        //   outputStride: 16,
-        //   inputResolution: { width: 257, height: 257 },
-        //   multiplier: 0.75,
-        // }
-      ).then((net) => {
-        console.log("backend:", tf.getBackend());
-        this.net = net;
-        window.requestAnimationFrame(this.draw);
-      }).catch((err) => {
-        throw (err)
+    mirror
+      .setupCamera(this.$refs.video)
+      .then(stopFn => {
+        mirror.setupVideoBuffer(this.$refs.videoBuffer, this.$refs.video);
+        this.renderLayer = this.$refs.canvas.getContext("2d");
+        tf.enableProdMode();
+        posenet
+          .load
+          //   {
+          //   architecture: 'MobileNetV1',
+          //   outputStride: 16,
+          //   inputResolution: { width: 257, height: 257 },
+          //   multiplier: 0.75,
+          // }
+          ()
+          .then(net => {
+            console.log("backend:", tf.getBackend());
+            this.net = net;
+            window.requestAnimationFrame(this.draw);
+          })
+          .catch(err => {
+            throw err;
+          });
       })
-    })
-    .catch(err => {
-      console.log(err);
-      if (__DEBUG_MODE) {
-        window.requestAnimationFrame(this.draw);
-      }
-    }
-      )
+      .catch(err => {
+        console.log(err);
+        if (__DEBUG_MODE) {
+          window.requestAnimationFrame(this.draw);
+        }
+      });
   },
   beforeDestroy() {
-    mirror.destructCamera(this.$refs.video);
+    if (this.$refs.video) {
+      mirror.destructCamera(this.$refs.video);
+    }
   },
   components: { TitleCard }
-
-}
+};
 </script>
 
 <style>

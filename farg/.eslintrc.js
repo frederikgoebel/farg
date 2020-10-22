@@ -19,6 +19,8 @@ module.exports = {
     "no-var": "warn",
     "no-redeclare": "warn",
     "prefer-const": "warn",
-    "no-unreachable": "warn"
+    "no-unreachable": "warn",
+    "vue/no-unused-components": "warn",
+    "@typescript-eslint/camelcase": "warn"
   }
 };

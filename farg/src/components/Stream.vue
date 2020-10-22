@@ -1,30 +1,55 @@
 <template>
-<transition-group name="stream" tag="div" id="color-stream" class="row">
-  <Mirror key="mirror" @swatchAdded="addSwatch" />
-  <div key="loadingMsg" v-if="isLoading">Loading ...</div>
-  <div v-else v-for="(swatch, swatchIndex) in swatchesToShow" :key="`swatch-${swatchIndex}`" @click="selectSwatch(swatchIndex)" class="color-column" :class="{squash: preview, large: selectedSwatch==swatchIndex}">
-    <div v-for=" (color, colorIndex) in swatch" :key="`color-${colorIndex}`" class="color-field" :style="{background:  color}">
-      <div :class="{hidden: selectedSwatch!=swatchIndex}" class="color-info" :style="{color: invertColor(rgbaToHex(color),true)}">
-        {{rgbaToHex(color)}}
+  <transition-group name="stream" tag="div" id="color-stream" class="row">
+    <Mirror v-if="showMirror" key="mirror" @swatchAdded="addSwatch" />
+    <div key="loadingMsg" v-if="isLoading">Loading ...</div>
+    <div
+      v-else
+      v-for="swatch in swatchesToShow"
+      :key="`swatch-${swatch.id}`"
+      class="color-column"
+      :class="{ squash: preview, large: selectedSwatch == swatch.id }"
+    >
+      <div
+        v-for="(color, colorIndex) in swatch.colors"
+        :key="`color-${colorIndex}`"
+        class="color-field"
+        :style="{ background: color }"
+        @click="selectSwatch(swatch.id)"
+      >
+        <div
+          :class="{ hidden: selectedSwatch != swatch.id }"
+          class="color-info"
+          :style="{ color: invertColor(rgbaToHex(color), true) }"
+        >
+          {{ rgbaToHex(color) }}
+        </div>
+      </div>
+      <div v-if="!preview" class="swatch-info">
+        {{ toRelativeTime(swatch.creationDate) }}
       </div>
     </div>
-    <div v-if="!preview" class="swatch-info">Yesterday</div>
-  </div>
-  <div key="imageLoader" id="image-loader" style="display: none;"> </div>
-</transition-group>
+    <div key="imageLoader" id="image-loader" style="display: none;"></div>
+  </transition-group>
 </template>
 
 <script>
-import axios from 'axios';
-import Mirror from './Mirror'
-import { rgbaToHex, invertColor } from '../utils/invertColor';
+import axios from "axios";
+import Mirror from "./Mirror";
+import { rgbaToHex, invertColor } from "../utils/invertColor";
+import TimeAgo from "javascript-time-ago";
+import en from "javascript-time-ago/locale/en";
 
+TimeAgo.addDefaultLocale(en);
+
+const timeAgo = new TimeAgo();
 
 export default {
   data: () => ({
     isLoading: true,
     swatches: [],
     selectedSwatch: null,
+    creatorID: "unknown",
+    tmpIDs: 0
   }),
   components: {
     Mirror
@@ -32,62 +57,89 @@ export default {
   props: {
     streamID: {
       type: String,
-      required: true,
+      required: true
     },
     preview: Boolean,
+    showMirror: Boolean
   },
   computed: {
     swatchesToShow() {
-      return this.swatches.reverse()
+      return this.swatches.slice().reverse();
     }
   },
   methods: {
     rgbaToHex,
     invertColor,
-    selectSwatch(index) {
-      if (index == this.selectedSwatch)
-        this.selectedSwatch = null;
-      else
-        this.selectedSwatch = index;
+    toRelativeTime(time) {
+      return timeAgo.format(new Date(time), "twitter-minute-now"); // TODO how to make this reactive
+    },
+    selectSwatch(id) {
+      if (id == this.selectedSwatch) this.selectedSwatch = -1;
+      else this.selectedSwatch = id;
     },
     addSwatch(swatch) {
-      this.swatches.push(swatch);
+      swatch.forEach((color, index) => {
+        swatch[index] = this.rgbaToHex(color);
+      });
 
-      axios.post(process.env.VUE_APP_API_SERVER + '/' + this.streamID + '/swatches', {
+      const swatchObj = {
         colors: swatch,
-      }).catch(function(error) {
-        // handle error
-        console.log(error);
-      })
+        creator: this.creatorID,
+        id: "tmpID_" + this.tmpIDs
+      };
+      this.tmpIDs++;
+
+      this.swatches.push(swatchObj);
+      this.selectedSwatch = swatchObj.id;
+
+      axios
+        .post(
+          process.env.VUE_APP_API_SERVER + "/" + this.streamID + "/swatches",
+          swatchObj
+        )
+        .catch(function(error) {
+          // handle error
+          console.log(error);
+        });
     },
     receiveMsg(event) {
       console.log(event.data);
 
-      var msg = JSON.parse(event.data);
+      const msg = JSON.parse(event.data);
       console.log(msg);
-      this.swatches.push(msg.colors);
+      if (msg.creator != this.creatorID) this.swatches.push(msg);
+    },
+    uuidv4() {
+      // Not super collision safe but good enough for now
+      return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(
+        c
+      ) {
+        const r = (Math.random() * 16) | 0,
+          v = c == "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
     }
-
   },
   mounted() {
     this.isLoading = true;
-    axios.get(process.env.VUE_APP_API_SERVER + '/' + this.streamID + '/swatches')
+    axios
+      .get(process.env.VUE_APP_API_SERVER + "/" + this.streamID + "/swatches")
       .then(response => {
-        this.swatches = response.data.colors;
-        if (this.swatches == null)
-          this.swatches = []
-        this.isLoading = false
+        this.swatches = response.data.swatches;
+        if (this.swatches == null) this.swatches = [];
+        this.isLoading = false;
       })
       .catch(function(error) {
         // handle error
         console.log(error);
-      })
+      });
 
+    this.creatorID = this.uuidv4();
 
     this.socket = new WebSocket(process.env.VUE_APP_WS_SERVER);
     this.socket.onmessage = this.receiveMsg;
-  },
-}
+  }
+};
 </script>
 
 <style scoped>
@@ -115,7 +167,6 @@ export default {
   padding-left: 10px;
   display: flex;
   flex-direction: column;
-  cursor: pointer;
 }
 
 .squash {
@@ -128,13 +179,14 @@ export default {
   padding-right: 10px;
 }
 
-.squash>.color-field {
+.squash > .color-field {
   margin-bottom: 2px;
 }
 
 .color-field {
   flex-grow: 1;
   margin-bottom: 10px;
+  cursor: pointer;
 }
 
 .color-field:first-child {
@@ -165,7 +217,7 @@ export default {
 }
 
 .color-info.hidden {
-  opacity: 0.0;
+  opacity: 0;
 }
 
 .large {

@@ -5,7 +5,6 @@ import drawPathShape from "./blob";
 
 import {
   saveVideoToBuffer,
-  drawBody,
   CollisionBody,
   getPose,
   drawKeypoints,

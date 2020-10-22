@@ -3,9 +3,9 @@ import App from "./App.vue";
 import "./assets/style.css";
 import VueRouter from "vue-router";
 
-import Home from "./components/Home";
-import About from "./components/About";
-import Presentation from "./components/Presentation";
+import Home from "./components/Home.vue";
+import About from "./components/About.vue";
+import Presentation from "./components/Presentation.vue";
 
 Vue.config.productionTip = false;
 
