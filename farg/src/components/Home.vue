@@ -11,7 +11,6 @@
 <!-- <Mirror @swatchAdded="addSwatch" />
 
   <div id="image-loader" /> -->
-</div>
 </template>
 
 
