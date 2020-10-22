@@ -18,8 +18,8 @@ interface RectangleAnimationArgs {
 abstract class RectangleAnimation extends BaseAnimation {
   rectangle: Rectangle;
   duration: number;
-  elapsedTime = 0;
-  easingFunction: EasingFunction = (t: number) => t;
+  protected elapsedTime = 0;
+  protected easingFunction: EasingFunction = (t: number) => t;
 
   constructor({
     ctx,
@@ -137,19 +137,16 @@ export default class Rectangle {
   };
 }
 
-interface ScaleArgs {
-  rectangle: Rectangle;
-  ctx: CanvasRenderingContext2D;
+interface ScaleArgs extends RectangleAnimationArgs {
   toSize: Size;
-  duration: number;
 }
 export class Scale extends RectangleAnimation {
   fromSize?: Size;
   toSize: Size;
   center?: Point2D;
 
-  constructor({ ctx, toSize, duration, rectangle }: ScaleArgs) {
-    super({ ctx, rectangle, duration });
+  constructor({ ctx, toSize, duration, rectangle, easingFunction }: ScaleArgs) {
+    super({ ctx, rectangle, duration, easingFunction });
 
     this.duration = duration;
     this.toSize = toSize;
@@ -197,19 +194,15 @@ export class Scale extends RectangleAnimation {
   };
 }
 
-interface TranslateArgs {
-  rectangle: Rectangle;
-  ctx: CanvasRenderingContext2D;
-  duration: number;
+interface TranslateArgs extends RectangleAnimationArgs {
   to: Point2D;
 }
-
 export class Translate extends RectangleAnimation {
   from?: Point2D;
   to: Point2D;
 
-  constructor({ ctx, duration, to, rectangle }: TranslateArgs) {
-    super({ ctx, rectangle, duration });
+  constructor({ ctx, duration, to, rectangle, easingFunction }: TranslateArgs) {
+    super({ ctx, rectangle, duration, easingFunction });
 
     this.duration = duration;
     this.to = to;

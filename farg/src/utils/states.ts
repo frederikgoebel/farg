@@ -400,12 +400,14 @@ class ColorSteal {
           destination.y += rectangleSize.height;
 
           highlight.onFinish = () => {
-            rectangleAnimation.rectangle = new Rectangle(
+            const highlightedBox = new Rectangle(
               highlight.highlightPosition().x,
               highlight.highlightPosition().y,
               32,
               32
             );
+
+            rectangleAnimation.setRectangle(highlightedBox);
           };
 
           return Sequential.create(highlight, rectangleAnimation);
