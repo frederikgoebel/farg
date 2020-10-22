@@ -23,7 +23,7 @@
       </a>
       <a class="pr-32">Patricia Zabecka
       </a>
-      <a class="pr-32">Hugo Eklund</a>
+      <a class="pr-32">Hugo Ekelund</a>
       <a>Frederik Göbel
       </a>
     </div>
