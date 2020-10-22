@@ -1,12 +1,16 @@
-/* eslint-disable */
-
 import gsap from "gsap";
+
+import { Shapeshifter, toPoseDict } from "./skeleton";
+import drawPathShape from "./blob";
+
 import {
   saveVideoToBuffer,
   drawBody,
   CollisionBody,
   getPose,
-  drawKeypoints
+  drawKeypoints,
+  updatePose,
+  usedKeyPointParts
 } from "./mirror";
 
 import generateSwatches, { ColorSample, mockSwatch } from "./pixelator";
@@ -39,34 +43,83 @@ const backColor = "#023F92";
 const __DEBUG_MODE = false;
 
 class Idle {
-  constructor() {}
-  async tick(drawCtx, video, videoBuffer, posenet) {
+  shapeshifter: any;
+  setTextCallback: any;
+  perfectTime: number;
+  constructor(setTextCallback) {
+    this.shapeshifter = new Shapeshifter({
+      x: 200,
+      y: 400
+    });
+    this.setTextCallback = setTextCallback;
+    this.perfectTime = 0;
+  }
+  async tick(drawCtx, video, videoBuffer, posenet, dt) {
     if (__DEBUG_MODE) return "colorSteal";
 
-    let collisionBody = new CollisionBody(
-      {
-        x: 20,
-        y: 0
-      },
-      drawCtx.canvas.height / 280
-    );
-
     saveVideoToBuffer(video, videoBuffer);
-    let pose = await getPose(posenet, videoBuffer.canvas);
-    let allIn = collisionBody.colliding(pose);
+    await updatePose(posenet, videoBuffer.canvas);
+    const pose = getPose();
+    const poseDict = toPoseDict(pose.keypoints);
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
-    drawCtx.rect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
-    drawCtx.fillStyle = backColor;
-    drawCtx.fill();
+    this.shapeshifter.tick(poseDict);
 
+    drawCtx.save();
+    drawPathShape(drawCtx, this.shapeshifter.shape);
+    drawCtx.clip();
     drawCtx.drawImage(videoBuffer.canvas, 0, 0);
+    drawCtx.restore();
 
-    collisionBody.debugDraw(drawCtx);
+    // collisionBody.debugDraw(drawCtx);
     drawKeypoints(pose.keypoints, 0.6, drawCtx);
 
-    if (allIn) return "found";
+    drawCtx.save();
+    drawCtx.lineWidth = 15;
+    drawCtx.globalCompositeOperation = "screen";
+
+    drawCtx.translate(0, 0);
+    drawPathShape(drawCtx, this.shapeshifter.shape);
+    drawCtx.strokeStyle = "#FF0000";
+    drawCtx.stroke();
+
+    drawCtx.translate(7, 0);
+    drawPathShape(drawCtx, this.shapeshifter.shape);
+    drawCtx.strokeStyle = "#1EFF33";
+    drawCtx.stroke();
+
+    drawCtx.translate(-9, 4);
+    drawPathShape(drawCtx, this.shapeshifter.shape);
+    drawCtx.strokeStyle = "#E864FF";
+    drawCtx.stroke();
+
+    drawCtx.restore();
+
+    let allIn = true;
+    usedKeyPointParts.forEach(part => {
+      if (poseDict[part] == undefined) allIn = false;
+    });
+
+    if (
+      poseDict["leftEye"] == undefined ||
+      poseDict["leftAnkle"] == undefined
+    ) {
+      this.setTextCallback("Go further away!");
+      this.perfectTime = 0;
+    } else if (allIn) {
+      this.perfectTime += dt;
+      this.setTextCallback("Perfect stay like this.");
+    } else {
+      this.setTextCallback("Searching for some bones..");
+      this.perfectTime = 0;
+    }
+
+    if (this.perfectTime > 3000) {
+      this.perfectTime = 0;
+      return "flash";
+    }
+
     return "idle";
   }
 }
@@ -94,7 +147,7 @@ class Found {
 
   async tick(drawCtx, video, videoBuffer, posenet) {
     this.setTickEnabled && this.setTickEnabled(false);
-    let collisionBody = new CollisionBody(
+    const collisionBody = new CollisionBody(
       {
         x: 20,
         y: 0
@@ -105,15 +158,10 @@ class Found {
     saveVideoToBuffer(video, videoBuffer);
     this.setTickEnabled && this.setTickEnabled(true);
 
-    let pose = await getPose(posenet, videoBuffer.canvas);
-    let allIn = collisionBody.colliding(pose);
+    const pose = await getPose(posenet, videoBuffer.canvas);
+    const allIn = collisionBody.colliding(pose);
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
-
-    drawCtx.rect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
-    drawCtx.fillStyle = backColor;
-    drawCtx.fill();
-
     drawCtx.drawImage(videoBuffer.canvas, 0, 0);
 
     collisionBody.debugDraw(drawCtx);
@@ -174,12 +222,12 @@ class Flash {
 
 class ColorSteal {
   colorCallback: (swatch: Swatch) => unknown;
-  FIRST_TIME: boolean = true;
+  FIRST_TIME = true;
   pose: any;
   boundingBoxes?: BoundingBox[];
   swatch: Swatch = [];
   lastUpdate?: number;
-  deltaTime: number = 0;
+  deltaTime = 0;
   animation?: Animation;
 
   constructor(colorCallback) {
@@ -252,26 +300,50 @@ class ColorSteal {
       const lineAnimations = this.boundingBoxes.map(bb => {
         const topHorizontal = new LineAnimation(
           drawCtx,
-          { x: bb.startX, y: bb.startY },
-          { x: bb.endX, y: bb.startY },
+          {
+            x: bb.startX,
+            y: bb.startY
+          },
+          {
+            x: bb.endX,
+            y: bb.startY
+          },
           DURATION_MS
         );
         const bottomHorizontal = new LineAnimation(
           drawCtx,
-          { x: bb.endX, y: bb.endY },
-          { x: bb.startX, y: bb.endY },
+          {
+            x: bb.endX,
+            y: bb.endY
+          },
+          {
+            x: bb.startX,
+            y: bb.endY
+          },
           DURATION_MS
         );
         const leftVertical = new LineAnimation(
           drawCtx,
-          { x: bb.startX, y: bb.startY },
-          { x: bb.startX, y: bb.endY },
+          {
+            x: bb.startX,
+            y: bb.startY
+          },
+          {
+            x: bb.startX,
+            y: bb.endY
+          },
           DURATION_MS
         );
         const rightVertical = new LineAnimation(
           drawCtx,
-          { x: bb.endX, y: bb.endY },
-          { x: bb.endX, y: bb.startY },
+          {
+            x: bb.endX,
+            y: bb.endY
+          },
+          {
+            x: bb.endX,
+            y: bb.startY
+          },
           DURATION_MS
         );
         return new Parallel(

@@ -17,7 +17,10 @@
     "axios": "^0.20.0",
     "rgbquant": "^1.1.2",
     "gsap": "^3.5.1",
-    "sat": "^0.8.0"
+    "sat": "^0.8.0",
+    "simplex-noise": "^2.4.0",
+    "three": "^0.121.1",
+    "vue-router": "^3.4.7"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^2.33.0",

@@ -33,7 +33,7 @@
     "src/**/*.vue",
     "tests/**/*.ts",
     "tests/**/*.tsx"
-, "src/utils/statemachine.js"  ],
+, "src/utils/statemachine.js", "src/main.js"  ],
   "exclude": [
     "node_modules"
   ]
