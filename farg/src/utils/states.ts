@@ -152,7 +152,7 @@ class Idle {
       this.perfectTime += dt;
       this.setTextCallback("Perfect stay like this.");
     } else {
-      this.setTextCallback("Searching for some bones..");
+      this.setTextCallback("You need more light.");
       this.perfectTime = 0;
     }
 

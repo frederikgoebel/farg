@@ -135,7 +135,7 @@ export default {
 
 <style>
 .callout {
-  font-size: 3rem;
+  font-size: 2.5rem;
   text-align: center;
   background: white;
   color: black;
