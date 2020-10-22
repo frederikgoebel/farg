@@ -16,7 +16,6 @@ export class PaletteAnimation extends BaseAnimation {
   current: Point2D;
   boxSize: number;
   duration: number;
-  finished: boolean;
   temporary: boolean;
   currentColorIndex: number;
 
@@ -34,7 +33,6 @@ export class PaletteAnimation extends BaseAnimation {
     this.current = { ...topLeft };
     this.boxSize = boxSize;
     this.duration = duration;
-    this.finished = false;
     this.temporary = false;
     this.currentColorIndex = Math.floor(
       Math.abs(this.current.x - this.topLeft.x) / this.boxSize
@@ -45,23 +43,20 @@ export class PaletteAnimation extends BaseAnimation {
 
   updateAnimation = (deltaTime: number) => {
     if (!deltaTime || deltaTime === 0) return false;
+    if (this.isFinished()) return true;
 
-    if (!this.finished) {
-      this.currentColorIndex = Math.floor(
-        Math.abs(this.current.x - this.topLeft.x) / this.boxSize
-      );
-      const part = deltaTime / this.duration;
-      this.current.x += this.swatch.palette.length * this.boxSize * part;
-      if (this.currentColorIndex >= this.swatch.palette.length) {
-        this.currentColorIndex = this.swatch.palette.length - 1;
-        this.finished = true;
-      }
+    this.currentColorIndex = Math.floor(
+      Math.abs(this.current.x - this.topLeft.x) / this.boxSize
+    );
+    const part = deltaTime / this.duration;
+    this.current.x += this.swatch.palette.length * this.boxSize * part;
+    if (this.currentColorIndex >= this.swatch.palette.length) {
+      this.currentColorIndex = this.swatch.palette.length - 1;
+      this.setFinished(true);
     }
 
     return this.isFinished();
   };
-
-  isFinished = () => this.finished;
 
   draw = () => {
     for (let i = 0; i < this.currentColorIndex + 1; i++) {
@@ -147,7 +142,9 @@ export class HighlightPaletteAnimation extends BaseAnimation {
   updateAnimation = (deltaTime: number) => {
     if (!deltaTime || deltaTime === 0) return false;
 
-    if (!this.animation.update(deltaTime)) return false;
+    this.animation.update(deltaTime);
+    if (!this.animation.isFinished()) return false;
+    if (this.isFinished()) return true;
 
     this.elapsedTime = Math.min(
       this.elapsedTime + deltaTime,
@@ -183,16 +180,18 @@ export class HighlightPaletteAnimation extends BaseAnimation {
         }
         break;
       }
+      case HighlightPatternState.Focus:
+        if (this.state.elapsedTime >= this.FocusDurationMs) {
+          this.setFinished(true);
+        }
     }
 
     return this.isFinished();
   };
 
   draw = () => {
-    console.log("Draw HighlightPaletteAnimation before");
+    this.animation.render();
     if (!this.animation.isFinished()) return;
-
-    console.log("Draw HighlightPaletteAnimation after");
 
     if (this.state.state === HighlightPatternState.Focus) {
       const oldFillStyle = this.ctx.fillStyle;
@@ -250,13 +249,6 @@ export class HighlightPaletteAnimation extends BaseAnimation {
         this.increasingOpacity = true;
       }
     }
-  };
-
-  isFinished = (): boolean => {
-    return (
-      this.state.state === HighlightPatternState.Focus &&
-      this.state.elapsedTime >= this.FocusDurationMs
-    );
   };
 }
 

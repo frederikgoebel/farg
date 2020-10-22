@@ -46,10 +46,6 @@ abstract class RectangleAnimation extends BaseAnimation {
     );
     this.ctx.restore();
   };
-
-  isFinished = (): boolean => {
-    return this.elapsedTime >= this.duration;
-  };
 }
 
 export default class Rectangle {
@@ -71,22 +67,29 @@ export default class Rectangle {
     ctx,
     duration,
     size,
-    easingFunction
+    easingFunction,
+    name
   }: {
     ctx: CanvasRenderingContext2D;
     duration: number;
     size: Size;
     easingFunction?: EasingFunction;
+    name?: string;
   }): RectangleAnimations {
     const thunk: AnimationThunk = rectangle => {
       // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      return new Scale({
+      const animation = new Scale({
         ctx,
         rectangle,
         duration,
         toSize: size,
         easingFunction
       });
+      if (name) {
+        animation.setName(name);
+      }
+
+      return animation;
     };
 
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
@@ -176,7 +179,7 @@ export class Scale extends RectangleAnimation {
   }
 
   updateAnimation = (deltaTime: number): boolean => {
-    if (this.elapsedTime === this.duration) return true;
+    if (this.isFinished()) return true;
 
     this.elapsedTime = Math.min(this.elapsedTime + deltaTime, this.duration);
 
@@ -193,7 +196,11 @@ export class Scale extends RectangleAnimation {
     this.rectangle.width = width;
     this.rectangle.height = height;
 
-    return false;
+    if (this.elapsedTime >= this.duration) {
+      this.setFinished(true);
+    }
+
+    return this.isFinished();
   };
 }
 
@@ -217,7 +224,7 @@ export class Translate extends RectangleAnimation {
   }
 
   updateAnimation = (deltaTime: number): boolean => {
-    if (this.elapsedTime === this.duration) return true;
+    if (this.isFinished()) return true;
 
     this.elapsedTime = Math.min(this.elapsedTime + deltaTime, this.duration);
 
@@ -228,7 +235,11 @@ export class Translate extends RectangleAnimation {
     this.rectangle.x = x;
     this.rectangle.y = y;
 
-    return false;
+    if (this.elapsedTime >= this.duration) {
+      this.setFinished(true);
+    }
+
+    return this.isFinished();
   };
 }
 
@@ -305,22 +316,25 @@ class RectangleAnimations extends Sequential {
   translate = ({
     duration,
     to,
-    easingFunction
+    easingFunction,
+    name
   }: {
     duration: number;
     to: Point2D;
     easingFunction?: EasingFunction;
+    name?: string;
   }): RectangleAnimations => {
-    this.addThunk(
-      rectangle =>
-        new Translate({
-          ctx: this.ctx,
-          rectangle,
-          duration,
-          to,
-          easingFunction
-        })
-    );
+    this.addThunk(rectangle => {
+      const animation = new Translate({
+        ctx: this.ctx,
+        rectangle,
+        duration,
+        to,
+        easingFunction
+      });
+      if (name) animation.setName(name);
+      return animation;
+    });
 
     return this;
   };

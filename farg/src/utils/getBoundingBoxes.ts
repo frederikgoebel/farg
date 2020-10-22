@@ -6,10 +6,10 @@ export interface BoundingBox {
 }
 
 export const mockBB: BoundingBox = {
-  startX: 0,
-  startY: 0,
+  startX: 20,
+  startY: 300,
   endX: 100,
-  endY: 100
+  endY: 330
 };
 
 export const getHairBB = (keypoints): BoundingBox => {

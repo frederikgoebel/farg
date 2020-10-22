@@ -1,5 +1,4 @@
 import { EasingFunction } from "./easing";
-import { HighlightPaletteAnimation } from "./paletteAnimation";
 
 export type Point2D = { x: number; y: number };
 
@@ -43,7 +42,7 @@ type AnimationState =
 export interface Animation {
   animationState: AnimationState;
   update: (deltaTime: number) => boolean;
-  draw: () => void;
+  render: () => void;
 
   isFinished: () => boolean;
   temporary: boolean;
@@ -52,21 +51,44 @@ export interface Animation {
   getContext(): CanvasRenderingContext2D;
 
   shouldDelete(): boolean;
+
+  identifier: string;
+  setName: (name: string) => void;
 }
 
 export abstract class BaseAnimation implements Animation {
+  identifier = "N/A";
   readonly ctx: CanvasRenderingContext2D;
   temporary = false;
   animationState: AnimationState = { type: AnimationType.Active };
+  private finished = false;
   onFinish?: () => void;
 
   protected abstract updateAnimation: (deltaTime: number) => boolean;
-  abstract draw: () => void;
-  abstract isFinished: () => boolean;
+  protected abstract draw: () => void;
+  isFinished = (): boolean => this.finished;
+  setFinished = (finished: boolean): void => {
+    if (this.finished && !finished) {
+      console.warn("this.finished was true, but setting it back to false?");
+    }
+
+    if (!this.finished && finished) {
+      if (this.identifier === "N/A") {
+        console.log(this);
+      }
+      console.log("Animation " + this.identifier + " finished.");
+    }
+
+    this.finished = finished;
+  };
 
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
   }
+
+  setName = (name: string) => {
+    this.identifier = name;
+  };
 
   update = (deltaTime: number) => {
     switch (this.animationState.type) {
@@ -102,6 +124,12 @@ export abstract class BaseAnimation implements Animation {
     }
 
     return finished;
+  };
+
+  render = () => {
+    if (!this.shouldDraw()) return;
+
+    this.draw();
   };
 
   fadeOut = (
@@ -144,6 +172,23 @@ export abstract class BaseAnimation implements Animation {
     };
   };
 
+  shouldDraw = (): boolean => {
+    const state = this.animationState;
+
+    switch (state.type) {
+      case AnimationType.Gone:
+      case AnimationType.ScheduledForDeletion:
+        return false;
+      case AnimationType.FadeOut:
+        if (state.opacity === 0) return false;
+        break;
+      default:
+        break;
+    }
+
+    return true;
+  };
+
   stroke = () => {
     if (this.animationState.type === AnimationType.Gone) return;
 
@@ -171,7 +216,6 @@ export abstract class BaseAnimation implements Animation {
 
 export class Parallel extends BaseAnimation {
   animations: Animation[];
-  finished = false;
   constructor(...animations: Animation[]) {
     super(animations[0].getContext());
 
@@ -196,7 +240,7 @@ export class Parallel extends BaseAnimation {
     }
 
     // const wasFinished = this.finished;
-    this.finished = allFinished;
+    this.setFinished(allFinished);
     // if (!wasFinished && this.finished) {
     //   console.log("Parallel finished");
     // }
@@ -205,15 +249,12 @@ export class Parallel extends BaseAnimation {
   };
 
   draw = () => {
-    this.animations.forEach(a => a.draw());
+    this.animations.forEach(a => a.render());
   };
-
-  isFinished = () => this.finished;
 }
 
 export class Sequential extends BaseAnimation {
   private animations: Animation[];
-  finished = false;
 
   constructor(ctx: CanvasRenderingContext2D) {
     super(ctx);
@@ -238,8 +279,7 @@ export class Sequential extends BaseAnimation {
     let i = 0;
     while (i < this.animations.length) {
       if (this.animations[i].shouldDelete()) {
-        console.log("[Sequential] Deleting:");
-        console.log(this.animations[i]);
+        console.log("[Sequential] Deleting " + this.animations[i].identifier);
         this.animations.splice(i, 1);
         continue;
       }
@@ -247,13 +287,13 @@ export class Sequential extends BaseAnimation {
       if (finished) {
         ++i;
       } else {
-        this.finished = false;
+        this.setFinished(false);
         return this.isFinished();
       }
     }
 
     // const wasFinished = this.finished;
-    this.finished = true;
+    this.setFinished(true);
     // if (!wasFinished && this.finished) {
     //   console.log("Sequential finished");
     // }
@@ -262,15 +302,14 @@ export class Sequential extends BaseAnimation {
 
   draw = () => {
     if (this.animations.length === 0) return;
-    this.animations[0].draw();
-    if (!this.animations[0].isFinished()) return;
 
-    let i = 1;
-    while (i < this.animations.length && this.animations[i].isFinished()) {
-      this.animations[i].draw();
+    let done = false;
+    let i = 0;
+    while (!done) {
+      const animation = this.animations[i];
+      animation.render();
       ++i;
+      done = !animation.isFinished() || i == this.animations.length;
     }
   };
-
-  isFinished = () => this.finished;
 }
