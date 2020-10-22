@@ -1,6 +1,6 @@
 <template>
 <transition-group name="stream" tag="div" id="color-stream" class="row">
-  <Mirror v-if="showMirror" key="mirror" @swatchAdded="addSwatch" />
+  <Mirror v-if="showMirror" key="mirror" @swatchAdded="addSwatch" :autoLoad="autoLoadMirror" />
   <div key="loadingMsg" v-if="isLoading">Loading ...</div>
   <div v-else v-for="swatch in swatchesToShow" :key="`swatch-${swatch.id}`" class="color-column" :class="{ squash: preview, large: selectedSwatch == swatch.id }">
     <div v-for="(color, colorIndex) in swatch.colors" :key="`color-${colorIndex}`" class="color-field" :style="{ background: color }" @click="selectSwatch(swatch.id)">
@@ -44,7 +44,8 @@ export default {
       required: true
     },
     preview: Boolean,
-    showMirror: Boolean
+    showMirror: Boolean,
+    autoLoadMirror: Boolean,
   },
   computed: {
     swatchesToShow() {
@@ -69,7 +70,8 @@ export default {
       const swatchObj = {
         colors: swatch,
         creator: this.creatorID,
-        id: "tmpID_" + this.tmpIDs
+        id: "tmpID_" + this.tmpIDs,
+        creationDate: new Date(),
       };
       this.tmpIDs++;
 

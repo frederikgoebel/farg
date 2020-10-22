@@ -1,6 +1,6 @@
 <template>
 <div class="mirror">
-  <div class="item-100 beforLoad" v-if="!loaded">
+  <div class="item-100 beforLoad" v-if="!loaded && !autoLoad">
     <p>Enable your camera to sample your own colors.</p>
     <button @click="loadMirror">Enable camera</button>
   </div>
@@ -35,6 +35,8 @@ export default {
     console.log("mounted")
     this.stateMachine = new StateMachine(this.swatchAdded, this.setText)
     this.drawRequest = window.requestAnimationFrame(this.draw);
+    if (this.autoLoad)
+      this.loadMirror()
   },
   methods: {
     loadMirror() {
