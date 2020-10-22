@@ -152,9 +152,7 @@ export default {
   flex-grow: 1;
   overflow: auto;
   -ms-overflow-style: none;
-  /* IE and Edge */
   scrollbar-width: none;
-  /* Firefox */
 }
 
 #color-stream::-webkit-scrollbar {
@@ -227,7 +225,9 @@ export default {
   width: 300px;
 }
 
-/* .color-column:hover {
-  width: 200px;
-} */
+@media only screen and (max-width: 600px) {
+  body {
+    background-color: lightblue;
+  }
+}
 </style>

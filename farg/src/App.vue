@@ -32,6 +32,8 @@ export default {
 #app {
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .header {
@@ -41,6 +43,14 @@ export default {
   overflow: hidden;
   min-width: min-content;
   justify-content: space-between;
+  flex-shrink: 0;
+}
+
+@media (max-width:600px) {
+  .header {
+    height: 70px;
+    padding: 0 16px 0 16px;
+  }
 }
 
 .page-title {

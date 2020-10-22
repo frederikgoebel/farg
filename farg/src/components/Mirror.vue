@@ -119,6 +119,12 @@ export default {
   flex-shrink: 0;
 }
 
+@media (max-width:1000px) {
+  .mirror {
+    width: 100%;
+  }
+}
+
 .canvas {
   width: 100%;
   height: 90%;
