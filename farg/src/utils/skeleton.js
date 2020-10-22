@@ -155,10 +155,10 @@ class Shapeshifter {
       point.v = new Vector2(0, 0);
     })
   }
-  tick(poseDict) {
+  tick(poseDict, dt) {
 
     let newPoints = [];
-    if (poseDict["leftEye"] && poseDict["rightEye"]) {
+    if (poseDict && poseDict["leftEye"] && poseDict["rightEye"]) {
 
       poseDict = fillApproximations(poseDict)
       poseDict = scaleOutwards(poseDict)
@@ -191,7 +191,7 @@ class Shapeshifter {
       point.y += point.v.y
       point.v.multiplyScalar(this.damp)
     })
-    this.time += 0.01;
+    this.time += dt / 6000;
 
   }
 }

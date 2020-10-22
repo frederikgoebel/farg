@@ -41,15 +41,52 @@ const backColor = "#023F92";
 
 const __DEBUG_MODE = false;
 
-class Idle {
-  shapeshifter: any;
+const shapeshifter = new Shapeshifter({
+  x: 200,
+  y: 400
+});
+
+class BeforeLoad {
   setTextCallback: any;
   perfectTime: number;
   constructor(setTextCallback) {
-    this.shapeshifter = new Shapeshifter({
-      x: 200,
-      y: 400
-    });
+    this.setTextCallback = setTextCallback;
+    this.perfectTime = 0;
+  }
+  async tick(drawCtx, video, videoBuffer, posenet, dt) {
+    drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
+
+    shapeshifter.tick(undefined, dt);
+
+    drawCtx.save();
+    drawCtx.lineWidth = 15;
+    drawCtx.globalCompositeOperation = "screen";
+
+    drawCtx.translate(0, 0);
+    drawPathShape(drawCtx, shapeshifter.shape);
+    drawCtx.strokeStyle = "#FF0000";
+    drawCtx.stroke();
+
+    drawCtx.translate(7, 0);
+    drawPathShape(drawCtx, shapeshifter.shape);
+    drawCtx.strokeStyle = "#1EFF33";
+    drawCtx.stroke();
+
+    drawCtx.translate(-9, 4);
+    drawPathShape(drawCtx, shapeshifter.shape);
+    drawCtx.strokeStyle = "#E864FF";
+    drawCtx.stroke();
+
+    drawCtx.restore();
+
+    return "beforeLoad";
+  }
+}
+
+class Idle {
+  setTextCallback: any;
+  perfectTime: number;
+  constructor(setTextCallback) {
     this.setTextCallback = setTextCallback;
     this.perfectTime = 0;
   }
@@ -63,33 +100,33 @@ class Idle {
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
-    this.shapeshifter.tick(poseDict);
+    shapeshifter.tick(poseDict);
 
     drawCtx.save();
-    drawPathShape(drawCtx, this.shapeshifter.shape);
+    drawPathShape(drawCtx, shapeshifter.shape);
     drawCtx.clip();
     drawCtx.drawImage(videoBuffer.canvas, 0, 0);
     drawCtx.restore();
 
     // collisionBody.debugDraw(drawCtx);
-    drawKeypoints(pose.keypoints, 0.6, drawCtx);
+    // drawKeypoints(pose.keypoints, 0.6, drawCtx);
 
     drawCtx.save();
     drawCtx.lineWidth = 15;
     drawCtx.globalCompositeOperation = "screen";
 
     drawCtx.translate(0, 0);
-    drawPathShape(drawCtx, this.shapeshifter.shape);
+    drawPathShape(drawCtx, shapeshifter.shape);
     drawCtx.strokeStyle = "#FF0000";
     drawCtx.stroke();
 
     drawCtx.translate(7, 0);
-    drawPathShape(drawCtx, this.shapeshifter.shape);
+    drawPathShape(drawCtx, shapeshifter.shape);
     drawCtx.strokeStyle = "#1EFF33";
     drawCtx.stroke();
 
     drawCtx.translate(-9, 4);
-    drawPathShape(drawCtx, this.shapeshifter.shape);
+    drawPathShape(drawCtx, shapeshifter.shape);
     drawCtx.strokeStyle = "#E864FF";
     drawCtx.stroke();
 
@@ -164,7 +201,7 @@ class Found {
     drawCtx.drawImage(videoBuffer.canvas, 0, 0);
 
     collisionBody.debugDraw(drawCtx);
-    drawKeypoints(pose.keypoints, 0.6, drawCtx);
+    // drawKeypoints(pose.keypoints, 0.6, drawCtx);
 
     if (allIn) this.fadeTl.play();
     else this.fadeTl.reverse();
@@ -405,4 +442,4 @@ class ColorSteal {
   }
 }
 
-export { Idle, Found, Flash, ColorSteal };
+export { Idle, Found, Flash, ColorSteal , BeforeLoad};
