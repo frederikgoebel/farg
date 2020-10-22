@@ -7,7 +7,10 @@ import {
   getLowerBodyBB,
   getThighsBB,
   getFeetBB,
+  BoundingBox
 } from "./getBoundingBoxes";
+
+export type Swatch = string[];
 
 // options with defaults (not required)
 const options = {
@@ -24,14 +27,26 @@ const options = {
   reIndex: false, // affects predefined palettes only. if true, allows compacting of sparsed palette once target palette size is reached. also enables palette sorting.
   useCache: true, // enables caching for perf usually, but can reduce perf in some cases, like pre-def palettes
   cacheFreq: 10, // min color occurance count needed to qualify for caching
-  colorDist: "euclidean", // method used to determine color distance, can also be "manhattan"
+  colorDist: "euclidean" // method used to determine color distance, can also be "manhattan"
 };
 
 // Retrieve palette and most prominent color from a specific area using BBs
-const getColorSamples = (imageCanvas, { startX, startY, endX, endY }) => {
+export type ColorSample = {
+  palette: string[];
+  prominentColor: string;
+};
+
+const getColorSamples = (
+  imageCanvas,
+  { startX, startY, endX, endY }
+): ColorSample => {
   const imgCtx = imageCanvas.getContext("2d");
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
+  if (ctx === null) {
+    console.error("No context.");
+    return { palette: [], prominentColor: "" };
+  }
   const width = Math.abs(startX - endX);
   const height = Math.abs(startY - endY);
   canvas.width = width;
@@ -44,7 +59,8 @@ const getColorSamples = (imageCanvas, { startX, startY, endX, endY }) => {
   const div = document.createElement("div");
   div.style.display = "flex";
   div.style.border = "1px solid yellow";
-  const sampledColors = { palette: [] };
+  const sampledColors: ColorSample = { palette: [], prominentColor: "" };
+
   for (let i = 0; i < swatches.length; i += 4) {
     const [red, green, blue, alpha] = swatches.slice(i, i + 4);
     const colorDiv = document.createElement("div");
@@ -56,6 +72,10 @@ const getColorSamples = (imageCanvas, { startX, startY, endX, endY }) => {
   }
 
   const imageLoader = document.getElementById("image-loader");
+  if (imageLoader === null) {
+    console.error("No context.");
+    return { palette: [], prominentColor: "" };
+  }
   imageLoader.append(canvas);
   imageLoader.append(div);
 
@@ -65,15 +85,30 @@ const getColorSamples = (imageCanvas, { startX, startY, endX, endY }) => {
   return sampledColors;
 };
 
-export const generateSwatches = (imageCanvas, pose) => {
-  const { keypoints } = pose;
+export const mockSwatch: ColorSample = {
+  palette: [
+    "#000000",
+    "#111111",
+    "#222222",
+    "#333333",
+    "#444444",
+    "#555555",
+    "#666666",
+    "#777777"
+  ],
+  prominentColor: "#444444"
+};
 
-  const hairBB = getHairBB(keypoints);
-  const faceBB = getFaceBB(keypoints);
-  const upperBodyBB = getUpperBodyBB(keypoints);
-  const lowerBodyBB = getLowerBodyBB(keypoints);
-  const thighsBB = getThighsBB(keypoints);
-  const feetBB = getFeetBB(keypoints);
+export const generateSwatches = (
+  imageCanvas,
+  boundingBoxes: BoundingBox[]
+): ColorSample[] => {
+  const hairBB = boundingBoxes[0];
+  const faceBB = boundingBoxes[1];
+  const upperBodyBB = boundingBoxes[2];
+  const lowerBodyBB = boundingBoxes[3];
+  const thighsBB = boundingBoxes[4];
+  const feetBB = boundingBoxes[5];
 
   const hairBox = getColorSamples(imageCanvas, hairBB);
   const skinBox = getColorSamples(imageCanvas, faceBB);
