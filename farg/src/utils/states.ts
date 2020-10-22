@@ -1,4 +1,5 @@
 import gsap from "gsap";
+import SimplexNoise from 'simplex-noise'
 
 import { Shapeshifter, toPoseDict } from "./skeleton";
 import drawPathShape from "./blob";
@@ -51,41 +52,45 @@ const shapeshifter = new Shapeshifter({
 });
 
 class BeforeLoad {
-  setTextCallback: any;
-  perfectTime: number;
-  constructor(setTextCallback) {
-    this.setTextCallback = setTextCallback;
-    this.perfectTime = 0;
+  time: number;
+  constructor() {
+    this.time = 0
+    this.simplex = new SimplexNoise()
   }
   async tick(drawCtx, video, videoBuffer, posenet, dt) {
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
     shapeshifter.tick(undefined, dt);
 
+    drawCtx.save();
+    drawPathShape(drawCtx, shapeshifter.shape);
+    drawCtx.clip();
+
     drawPathShape(drawCtx, shapeshifter.shape);
     drawCtx.fillStyle = "black";
     drawCtx.fill();
 
-    drawCtx.save();
     drawCtx.lineWidth = 15;
     drawCtx.globalCompositeOperation = "screen";
 
-    drawCtx.translate(0, 0);
+    drawCtx.translate(0,0);
     drawPathShape(drawCtx, shapeshifter.shape);
     drawCtx.strokeStyle = "#FF0000";
     drawCtx.stroke();
 
-    drawCtx.translate(7, 0);
+    drawCtx.translate(this.simplex.noise2D(100, this.time)*6-3,this.simplex.noise2D(20, this.time)*6-3);
     drawPathShape(drawCtx, shapeshifter.shape);
     drawCtx.strokeStyle = "#1EFF33";
     drawCtx.stroke();
 
-    drawCtx.translate(-9, 4);
+    drawCtx.translate(this.simplex.noise2D(1000, this.time) * 6-3,this.simplex.noise2D(20, this.time) * 6-3);
     drawPathShape(drawCtx, shapeshifter.shape);
     drawCtx.strokeStyle = "#E864FF";
     drawCtx.stroke();
 
     drawCtx.restore();
+
+    this.time += dt/2000;
 
     return "beforeLoad";
   }
@@ -97,6 +102,8 @@ class Idle {
   constructor(setTextCallback) {
     this.setTextCallback = setTextCallback;
     this.perfectTime = 0;
+    this.simplex = new SimplexNoise()
+    this.time = 0
   }
   async tick(
     drawCtx: CanvasRenderingContext2D,
@@ -120,26 +127,21 @@ class Idle {
     drawPathShape(drawCtx, shapeshifter.shape);
     drawCtx.clip();
     drawCtx.drawImage(videoBuffer.canvas, 0, 0);
-    drawCtx.restore();
 
-    // collisionBody.debugDraw(drawCtx);
-    // drawKeypoints(pose.keypoints, 0.6, drawCtx);
-
-    drawCtx.save();
     drawCtx.lineWidth = 15;
     drawCtx.globalCompositeOperation = "screen";
 
-    drawCtx.translate(0, 0);
+    drawCtx.translate(0,0);
     drawPathShape(drawCtx, shapeshifter.shape);
     drawCtx.strokeStyle = "#FF0000";
     drawCtx.stroke();
 
-    drawCtx.translate(7, 0);
+    drawCtx.translate(this.simplex.noise2D(100, this.time)*6-3,this.simplex.noise2D(20, this.time)*6-3);
     drawPathShape(drawCtx, shapeshifter.shape);
     drawCtx.strokeStyle = "#1EFF33";
     drawCtx.stroke();
 
-    drawCtx.translate(-9, 4);
+    drawCtx.translate(this.simplex.noise2D(1000, this.time) * 6-3,this.simplex.noise2D(20, this.time) * 6-3);
     drawPathShape(drawCtx, shapeshifter.shape);
     drawCtx.strokeStyle = "#E864FF";
     drawCtx.stroke();
@@ -167,9 +169,10 @@ class Idle {
 
     if (this.perfectTime > 3000) {
       this.perfectTime = 0;
+      this.time= 0;
       return "flash";
     }
-
+    this.time += dt/2000;
     return "idle";
   }
 }
