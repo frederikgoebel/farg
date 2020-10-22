@@ -26,15 +26,20 @@ import {
 
 import { Swatch } from "./pixelator";
 
+import easing from "./animation/easing";
 import {
   Parallel,
   Sequential,
-  LineAnimation,
-  PaletteAnimation,
   Animation,
-  highlightPalette,
-  easing
-} from "./animation";
+  Point2D
+} from "./animation/animation";
+import { LineAnimation } from "./animation/lineAnimation";
+import {
+  PaletteAnimation,
+  highlightPalette
+} from "./animation/paletteAnimation";
+import Rectangle from "./animation/rectangleAnimation";
+import { RectAreaLight } from "three";
 
 const frontColor = "#F7566A";
 const backColor = "#023F92";
@@ -53,7 +58,13 @@ class Idle {
     this.setTextCallback = setTextCallback;
     this.perfectTime = 0;
   }
-  async tick(drawCtx, video, videoBuffer, posenet, dt) {
+  async tick(
+    drawCtx: CanvasRenderingContext2D,
+    video,
+    videoBuffer,
+    posenet,
+    dt
+  ) {
     if (__DEBUG_MODE) return "colorSteal";
 
     saveVideoToBuffer(video, videoBuffer);
@@ -204,7 +215,6 @@ class Flash {
       await updatePose(posenet, videoBuffer.canvas);
     }
 
-
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
 
     drawCtx.drawImage(videoBuffer.canvas, 0, 0);
@@ -242,7 +252,7 @@ class ColorSteal {
       "#" + (0x1000000 + Math.random() * 0xffffff).toString(16).substr(1, 6)
     );
   }
-  async tick(drawCtx, video, videoBuffer, posenet) {
+  async tick(drawCtx: CanvasRenderingContext2D, video, videoBuffer, posenet) {
     const now = Date.now();
     if (this.lastUpdate) {
       this.deltaTime = now - this.lastUpdate;
@@ -356,6 +366,16 @@ class ColorSteal {
         );
       });
 
+      const rectangleSize = {
+        width: 80,
+        height: drawCtx.canvas.height / 6
+      };
+
+      const destination: Point2D = {
+        x: drawCtx.canvas.width - 80,
+        y: 0
+      };
+
       const paletteAnimations: Animation[] = this.boundingBoxes.map(
         (bb, index) => {
           const animation = new PaletteAnimation({
@@ -366,15 +386,33 @@ class ColorSteal {
             duration: DURATION_MS
           });
 
-          return highlightPalette({
+          const highlight = highlightPalette({
             animation,
             duration: 5000,
             easingFunction: easing.easeOutCubic
           });
+
+          const rectangleAnimation = Rectangle.scale(
+            drawCtx,
+            2000,
+            rectangleSize
+          ).translate(2000, destination);
+          destination.y += rectangleSize.height;
+
+          highlight.onFinish = () => {
+            rectangleAnimation.rectangle = new Rectangle(
+              highlight.highlightPosition().x,
+              highlight.highlightPosition().y,
+              32,
+              32
+            );
+          };
+
+          return Sequential.create(highlight, rectangleAnimation);
         }
       );
 
-      this.animation = new Sequential(
+      this.animation = Sequential.create(
         new Parallel(...lineAnimations),
         new Parallel(...paletteAnimations)
       );
@@ -382,7 +420,8 @@ class ColorSteal {
     }
 
     if (this.animation) {
-      this.animation.update(this.deltaTime);
+      if (this.deltaTime && this.deltaTime !== 0)
+        this.animation.update(this.deltaTime);
 
       if (this.animation.isFinished()) {
         this.colorCallback(this.swatch);
