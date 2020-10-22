@@ -1,6 +1,6 @@
 <template>
 <transition-group name="stream" tag="div" id="color-stream" class="row">
-  <Mirror v-if="showMirror && !hideMirror" key="mirror" @swatchAdded="addSwatch" :autoLoad="autoLoadMirror" />
+  <Mirror v-if="canShowMirror" key="mirror" @swatchAdded="addSwatch" :autoLoad="autoLoadMirror" />
   <div key="loadingMsg" v-if="isLoading">Loading ...</div>
   <div v-else v-for="swatch in swatchesToShow" :key="`swatch-${swatch.id}`" class="color-column" :class="{ squash: preview, large: selectedSwatch == swatch.id }">
     <div v-for="(color, colorIndex) in swatch.colors" :key="`color-${colorIndex}`" class="color-field" :style="{ background: color }" @click="selectSwatch(swatch.id)">
@@ -34,7 +34,7 @@ export default {
     selectedSwatch: null,
     creatorID: "unknown",
     tmpIDs: 0,
-    hideMirror: false,
+    canShowMirror: false
   }),
   components: {
     Mirror
@@ -52,23 +52,13 @@ export default {
     swatchesToShow() {
       return this.swatches.slice().reverse();
     },
-    hideMirror() {
-      return [
-          'iPad Simulator',
-          'iPhone Simulator',
-          'iPod Simulator',
-          'iPad',
-          'iPhone',
-          'iPod'
-        ].includes(navigator.platform)
-        // iPad on iOS 13 detection
-        ||
-        (navigator.userAgent.includes("Mac") && "ontouchend" in document)
-    },
   },
   methods: {
     rgbaToHex,
     invertColor,
+    isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    },
     toRelativeTime(time) {
       return timeAgo.format(new Date(time), "twitter-minute-now"); // TODO how to make this reactive
     },
@@ -121,6 +111,7 @@ export default {
     }
   },
   mounted() {
+    this.canShowMirror = this.showMirror && !this.isIOS()
     this.isLoading = true;
     axios
       .get(process.env.VUE_APP_API_SERVER + "/" + this.streamID + "/swatches")
