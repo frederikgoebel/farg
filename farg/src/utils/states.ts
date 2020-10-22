@@ -58,6 +58,11 @@ class BeforeLoad {
 
     shapeshifter.tick(undefined, dt);
 
+
+    drawPathShape(drawCtx, shapeshifter.shape);
+    drawCtx.fillStyle ="black";
+    drawCtx.fill();
+
     drawCtx.save();
     drawCtx.lineWidth = 15;
     drawCtx.globalCompositeOperation = "screen";

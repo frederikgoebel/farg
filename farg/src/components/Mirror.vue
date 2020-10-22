@@ -92,6 +92,8 @@ export default {
       if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;
+      }
+      if (this.$refs.videoBuffer.width !== width || this.$refs.videoBuffer.height !== height) {
         this.$refs.videoBuffer.width = width;
         this.$refs.videoBuffer.height = height;
       }
