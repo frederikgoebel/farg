@@ -1,10 +1,9 @@
 <template>
 <div class="mirror">
-  <div class="item-100 beforeLoad" v-if="isSupported">
+  <div class="item-100 beforeLoad" v-if="!isSupported">
     <p>Please use <a target="_blank" href="https://www.google.com/chrome/">Chrome</a> to sample your colors.</p>
   </div>
   <div class="item-100 beforeLoad" v-if="!loaded && !autoLoad && isSupported">
-    {{isSupported}}
     <p>Enable your camera to sample your own colors.</p>
     <button @click="loadMirror">Enable camera</button>
   </div>
