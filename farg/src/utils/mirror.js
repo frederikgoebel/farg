@@ -153,13 +153,20 @@ function saveVideoToBuffer(video, buffer) {
 
 // TODO this is very hacky. make a nice class <3
 let pose = undefined;
-
-async function updatePose(net, video) {
-  pose = await net.estimateSinglePose(video, {
-    flipHorizontal: false,
-    decodingMethod: "single-person"
-  });
-  pose.keypoints = pose.keypoints.filter(({score}) => score > 0.6);
+let time = 1000;
+async function updatePose(net, video, dt, force = false) {
+  if (time > 32 || force) {
+    pose = await net.estimateSinglePose(video, {
+      flipHorizontal: false,
+      decodingMethod: "single-person"
+    });
+    pose.keypoints = pose.keypoints.filter(({score}) => score > 0.6);
+    time = 0;
+    return;
+  } else {
+    console.log("skip")
+  }
+  time += dt;
 }
 
 function getPose() {
