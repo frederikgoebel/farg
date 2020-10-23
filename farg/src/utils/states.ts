@@ -336,7 +336,7 @@ class ColorSteal {
         this.boundingBoxes = Array(6).fill(mockBB);
       }
 
-      const margin = 32;
+      const margin = 0;
 
       this.boundingBoxes[0].startY -= margin;
       this.boundingBoxes[0].endY -= margin;
