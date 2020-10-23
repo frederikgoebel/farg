@@ -163,8 +163,6 @@ async function updatePose(net, video, dt, force = false) {
     pose.keypoints = pose.keypoints.filter(({score}) => score > 0.6);
     time = 0;
     return;
-  } else {
-    console.log("skip")
   }
   time += dt;
 }

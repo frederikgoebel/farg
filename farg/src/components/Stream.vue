@@ -179,6 +179,7 @@ export default {
   flex-grow: 1;
   margin-bottom: 10px;
   cursor: pointer;
+  filter: saturate(1.2) brightness(1.5);
 }
 
 .color-field:first-child {

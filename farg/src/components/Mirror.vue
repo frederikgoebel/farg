@@ -35,8 +35,6 @@ export default {
     autoLoad: Boolean
   },
   mounted() {
-    if (this.isSupported)
-      console.log("mounted")
     this.stateMachine = new StateMachine(this.swatchAdded, this.setText)
     this.drawRequest = window.requestAnimationFrame(this.draw);
     if (this.autoLoad)
