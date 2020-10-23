@@ -63,7 +63,11 @@ export default {
           mirror.setupVideoBuffer(this.$refs.videoBuffer, this.$refs.video);
           tf.enableProdMode();
           posenet
-            .load()
+            .load({
+              architecture: 'MobileNetV1',
+              outputStride: 16,
+              multiplier: 0.5
+            })
             .then(net => {
               console.log("backend:", tf.getBackend());
               this.net = net;
