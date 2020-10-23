@@ -20,8 +20,8 @@ export const getHairBB = (keypoints): BoundingBox => {
   const rightEar = keypoints.filter(({ part }) => part === "rightEar")[0]
     .position;
 
-  const endX = leftEar.x;
-  const startX = rightEar.x;
+  const endX = leftEar.x - 20;
+  const startX = rightEar.x + 20 ;
   const startY = leftEye.y - 45;
   const endY = leftEye.y - 30;
 
