@@ -35,8 +35,6 @@ export default {
     autoLoad: Boolean
   },
   mounted() {
-    if (this.isSupported)
-      console.log("mounted")
     this.stateMachine = new StateMachine(this.swatchAdded, this.setText)
     this.drawRequest = window.requestAnimationFrame(this.draw);
     if (this.autoLoad)
@@ -63,7 +61,11 @@ export default {
           mirror.setupVideoBuffer(this.$refs.videoBuffer, this.$refs.video);
           tf.enableProdMode();
           posenet
-            .load()
+            .load({
+              architecture: 'MobileNetV1',
+              outputStride: 16,
+              multiplier: 0.5
+            })
             .then(net => {
               console.log("backend:", tf.getBackend());
               this.net = net;

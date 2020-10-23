@@ -118,7 +118,7 @@ class Idle {
     if (__DEBUG_MODE) return "colorSteal";
 
     saveVideoToBuffer(video, videoBuffer);
-    await updatePose(posenet, videoBuffer.canvas);
+    await updatePose(posenet, videoBuffer.canvas, dt);
     const pose = getPose();
     const poseDict = toPoseDict(pose.keypoints);
 
@@ -201,7 +201,7 @@ class Found {
     this.setTickEnabled = setTickEnabled;
   }
 
-  async tick(drawCtx, video, videoBuffer, posenet) {
+  async tick(drawCtx, video, videoBuffer, posenet, dt) {
     this.setTickEnabled && this.setTickEnabled(false);
     const collisionBody = new CollisionBody(
       {
@@ -254,11 +254,11 @@ class Flash {
     });
   }
 
-  async tick(drawCtx, video, videoBuffer, posenet) {
+  async tick(drawCtx, video, videoBuffer, posenet, dt) {
     this.flashTl.play();
     if (this.flashTl.totalProgress() == 0) {
       saveVideoToBuffer(video, videoBuffer);
-      await updatePose(posenet, videoBuffer.canvas);
+      await updatePose(posenet, videoBuffer.canvas, dt, true);
     }
 
     drawCtx.clearRect(0, 0, drawCtx.canvas.width, drawCtx.canvas.height);
